@@ -33,6 +33,28 @@ Experience the live web app in action:
 
 ---
 
+## 📑 Table of Contents
+
+- [🌟 Live Demo](#-live-demo)
+- [💡 Why Madhyamik AI Mitra?](#-why-madhyamik-ai-mitra)
+- [🚀 Core Features](#-core-features)
+  - [1. 10-Year PYQ Bank & ABTA/WBTA Frequency](#1--10-year-pyq-bank--abtawbta-frequency-intelligence)
+  - [2. Interactive Blackboard Teacher](#2--the-interactive-blackboard-teacher-ব্ল্যাকবোর্ড-শিক্ষক)
+  - [3. Real-Time Oral Viva Voice Tutor](#3--real-time-oral-viva--voice-tutor-gemini-live-websocket)
+  - [4. True Bilingual Mirroring (বাংলা & English)](#4--true-bilingual-mirroring-বাংলা--english)
+  - [5. Multi-Format Paper & Syllabus Upload](#5--multi-format-paper--syllabus-upload)
+  - [6. Hallucination-Free YouTube Educational Grounding](#6--hallucination-free-youtube-educational-grounding)
+  - [7. Guest Student Mode & Cloud Persistence](#7--guest-student-mode--cloud-persistence)
+- [🏗️ System Architecture](#️-system-architecture)
+- [🛠️ Tech Stack & Libraries](#️-tech-stack--libraries)
+- [⚡ Getting Started (Local Development)](#-getting-started-local-development)
+- [🧪 Testing & Verification](#-testing--verification)
+- [🌐 Production Deployment](#-production-deployment)
+- [🔒 Security & Privacy](#-security--privacy)
+- [👨‍💻 Author & Acknowledgments](#-author--acknowledgments)
+
+---
+
 ## 💡 Why Madhyamik AI Mitra?
 
 Every year, over **10 lakh students** across West Bengal sit for the **Madhyamik Pariksha** (WBBSE Class 10 secondary examination). For most students in government and rural schools, this is the very first high-stakes board examination of their lives.
@@ -44,16 +66,6 @@ Generic AI chatbots often fail Madhyamik candidates:
 - They provide zero oral preparation for classroom viva and school test exams.
 
 **Madhyamik AI Mitra** was handcrafted to solve these exact hurdles. It pairs a **10-Year WBBSE PYQ database (2016–2026)** with real-time **Gemini 2.5 & 3.8 Live models**, offering students an attentive, bilingual digital tutor that behaves just like a patient school teacher at a green chalkboard.
-
----
-
-## 🖼️ Preview
-
-<p align="center">
-  <img src="src/assets/images/hero_madhyamik_study_1794975153515.jpg" width="48%" alt="Madhyamik AI Mitra Study Companion" />
-  &nbsp;
-  <img src="src/assets/images/feature_viva_tutor_1794975155257.jpg" width="48%" alt="Live Voice Viva Examiner" />
-</p>
 
 ---
 
