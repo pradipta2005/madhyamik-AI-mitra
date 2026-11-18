@@ -1,233 +1,255 @@
-# Madhyamik AI Mitra (মাধ্যমিক এআই মিত্র)
+# 🎓 Madhyamik AI Mitra (মাধ্যমিক এআই মিত্র)
 
-> **Autonomous WBBSE Class 10 Exam Research Assistant, Blackboard Teacher & Live Voice Viva Prep**
+<p align="center">
+  <img src="public/icon.svg" width="96" height="96" alt="Madhyamik AI Mitra Logo" />
+</p>
 
-[![WBBSE Class 10](https://img.shields.io/badge/WBBSE-Class%2010%20Madhyamik-143326?style=flat-square)](https://wbbse.wb.gov.in/)
-[![React 19](https://img.shields.io/badge/React-19.0-61DAFB?style=flat-square&logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-8.x-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-4.x-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
-[![Gemini API](https://img.shields.io/badge/Google%20Gen%20AI-Gemini%20API-4285F4?style=flat-square&logo=google)](https://ai.google.dev/)
-[![Firebase Firestore](https://img.shields.io/badge/Firebase-Firestore%20%26%20Auth-FFCA28?style=flat-square&logo=firebase)](https://firebase.google.com/)
+<p align="center">
+  <strong>An autonomous, bilingual study and exam research companion built specifically for West Bengal Board (WBBSE) Class 10 candidates.</strong>
+</p>
 
----
+<p align="center">
+  <a href="https://madhyamik-ai-mitra.onrender.com/"><img src="https://img.shields.io/badge/🚀_Live_Website-madhyamik--ai--mitra.onrender.com-143326?style=for-the-badge&logo=render&logoColor=white" alt="Live Demo" /></a>
+</p>
 
-## 📖 Overview
-
-**Madhyamik AI Mitra** is a specialized, autonomous AI study and research companion engineered specifically for West Bengal Board of Secondary Education (**WBBSE**) Class 10 (Madhyamik Pariksha) students across all seven core subjects:
-- **Physical Science** (ভৌত বিজ্ঞান)
-- **Life Science** (জীবন বিজ্ঞান)
-- **Mathematics** (গণিত)
-- **History** (ইতিহাস)
-- **Geography** (ভূগোল)
-- **Bengali** (বাংলা)
-- **English** (ইংরেজি)
-
-It combines a structured 10-year WBBSE Previous Year Question (**PYQ**) knowledge base (2016–2026), live **ABTA & WBTA** Test Paper trend cross-referencing, an interactive **Blackboard Teacher Problem Solver**, and a real-time **Live Voice Viva & Concept Tutor** powered by the Gemini Live API.
+<p align="center">
+  <a href="https://wbbse.wb.gov.in/"><img src="https://img.shields.io/badge/Curriculum-WBBSE%20Class%2010%20(2026)-0F4C5C?style=flat-square" alt="WBBSE Class 10" /></a>
+  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19.0-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 19" /></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" /></a>
+  <a href="https://vite.dev/"><img src="https://img.shields.io/badge/Vite-8.x-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" /></a>
+  <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/TailwindCSS-4.x-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" /></a>
+  <a href="https://ai.google.dev/"><img src="https://img.shields.io/badge/Google%20Gen%20AI-Gemini%20API-4285F4?style=flat-square&logo=google&logoColor=white" alt="Gemini API" /></a>
+  <a href="https://firebase.google.com/"><img src="https://img.shields.io/badge/Firebase-Firestore%20%26%20Auth-FFCA28?style=flat-square&logo=firebase&logoColor=black" alt="Firebase" /></a>
+</p>
 
 ---
 
-## ✨ Key Features
+## 🌟 Live Demo
 
-### 1. 🎯 10-Year PYQ & ABTA/WBTA Trend Analysis
-- Instant chapter-wise analysis across 10 years of verified Madhyamik board exams.
-- Cross-references All Bengal Teachers' Association (**ABTA**) and West Bengal Teachers' Association (**WBTA**) test paper frequency.
-- Explicit board marking weights (1-mark MCQs, 2-mark conceptual questions, 3-mark & 5-mark structured questions, and 8-mark essay questions).
-- High Probability, Repeated Trend, and Concept Builder badges for strategic exam revision.
+Experience the live web app in action:  
+👉 **[https://madhyamik-ai-mitra.onrender.com/](https://madhyamik-ai-mitra.onrender.com/)**
 
-### 2. 🗣️ Strict Bilingual Mirroring (বাংলা & English)
-- Fully respects the student's language choice: asking in Bengali (or natural Banglish) yields complete, idiomatic responses in standard Bengali script (বাংলা).
-- English-medium WBBSE students receive crisp explanations in clear academic English.
-- Natural phonetics for spoken mathematical and scientific notation (Greek letters, subscripts, formulas) for classroom audio readout.
+> **Note for First-Time Visitors:** Render's free web service spins down after brief inactivity. If the page takes ~30–45 seconds to load initially, it is simply waking up the container.
 
-### 3. 📐 Interactive Blackboard Teacher Problem Solver
-- Exclusively scoped to **Mathematics** and **Physical Science** numericals and proofs.
-- Functions like a supportive teacher standing at a green chalkboard: breaks down problems into progressive sections rather than dumping a wall of text.
-- Voice narration feature reads out the teacher's explanation.
-- Step-by-step confirmation prompts: student must confirm understanding before advancing to the next chalkboard section.
-- Integrated simplification levels (Levels 1–5) with concrete real-life analogies when students ask for clarification.
+---
 
-### 4. 🎙️ Live Voice Viva & Oral Examiner Prep
-- Full-duplex voice session powered by Gemini Live Audio API over WebSockets (`gemini-3.8-live`).
-- Realistic viva exam practice: oral questioning, instant feedback, and encouraging guidance.
-- Audio visualizer with real-time bidirectional transcription (student & tutor speech).
-- Complete session transcripts automatically formatted and synced to study sessions.
+## 💡 Why Madhyamik AI Mitra?
+
+Every year, over **10 lakh students** across West Bengal sit for the **Madhyamik Pariksha** (WBBSE Class 10 secondary examination). For most students in government and rural schools, this is the very first high-stakes board examination of their lives.
+
+Generic AI chatbots often fail Madhyamik candidates:
+- They explain concepts using CBSE/ICSE terms and out-of-syllabus textbooks.
+- They cannot break down Bengali numericals from physical science or theorem proofs step-by-step.
+- They lack awareness of test-paper patterns from **ABTA** (All Bengal Teachers' Association) and **WBTA** (West Bengal Teachers' Association).
+- They provide zero oral preparation for classroom viva and school test exams.
+
+**Madhyamik AI Mitra** was handcrafted to solve these exact hurdles. It pairs a **10-Year WBBSE PYQ database (2016–2026)** with real-time **Gemini 2.5 & 3.8 Live models**, offering students an attentive, bilingual digital tutor that behaves just like a patient school teacher at a green chalkboard.
+
+---
+
+## 🖼️ Preview
+
+<p align="center">
+  <img src="src/assets/images/hero_madhyamik_study_1794975153515.jpg" width="48%" alt="Madhyamik AI Mitra Study Companion" />
+  &nbsp;
+  <img src="src/assets/images/feature_viva_tutor_1794975155257.jpg" width="48%" alt="Live Voice Viva Examiner" />
+</p>
+
+---
+
+## 🚀 Core Features
+
+### 1. 📚 10-Year PYQ Bank & ABTA/WBTA Frequency Intelligence
+- Direct chapter-wise indexing across **all 7 WBBSE subjects**:
+  - *Physical Science (ভৌত বিজ্ঞান)*
+  - *Life Science (জীবন বিজ্ঞান)*
+  - *Mathematics (গণিত)*
+  - *History (ইতিহাস)*
+  - *Geography (ভূগোল)*
+  - *Bengali (বাংলা)*
+  - *English (ইংরেজি)*
+- Classifies each query by board pattern: **1-Mark MCQs / VSA**, **2-Mark Concept Questions**, **3-Mark & 5-Mark Numericals / Broad Questions**, and **8-Mark History Essays**.
+- Real-time badges indicate:
+  - `High Probability (সম্ভাব্য প্রশ্ন)`: Recurring themes across consecutive board sessions.
+  - `Repeated Trend (পুনরাবৃত্ত প্রশ্ন)`: Common questions spotted across ABTA and WBTA test papers.
+  - `Concept Builder (ধারণা স্পষ্টীকরণ)`: Foundational topics required to score 90%+ in Madhyamik.
+
+### 2. 🟢 The Interactive Blackboard Teacher (ব্ল্যাকবোর্ড শিক্ষক)
+- Dedicated step-by-step problem solver exclusively for **Mathematics** and **Physical Science**.
+- Modeled after a supportive teacher standing at a green chalkboard:
+  - Breaks long equations and proofs into **digestible chalk sections** instead of overwhelming students with walls of text.
+  - Requires the student to confirm understanding (*"আমি বুঝতে পেরেছি, পরবর্তী ধাপে চলুন"* / *"পরের ধাপ"*) before moving forward.
+  - **Dynamic Simplification (Levels 1–5)**: If a student clicks *"সহজ ভাষায় বোঝান"*, the tutor rewrites the step using intuitive real-world analogies (e.g., using coins, tea cups, or football fields).
+  - Built-in **Teacher Audio Narration** synthesized with proper Bengali and English mathematical phonetics.
+
+### 3. 🎙️ Real-Time Oral Viva & Voice Tutor (Gemini Live WebSocket)
+- Full-duplex, low-latency oral examination powered by `gemini-3.8-live` over persistent WebSockets (`/api/live-ws`).
+- Mirrors real Madhyamik viva sessions: the AI asks 1-mark and 2-mark conceptual questions verbally, listens to the student's spoken Bengali or English answer, praises correct logic, and gently corrects mistakes.
+- Live animated audio visualizer with real-time bidirectional transcript streaming.
+- Summarized viva transcripts are automatically stored in the student's study session for quick pre-exam review.
+
+### 4. 🗣️ True Bilingual Mirroring (বাংলা & English)
+- If the student writes or speaks in **Bengali** (or informal **Banglish**): the AI responds entirely in clean, idiomatic Bengali script (বাংলা), matching textbook terminology from WBBSE-approved publishers.
+- If the student asks in **English**: the response adopts crisp academic English tailored for English-medium WBBSE candidates.
+- Phonetic normalizer translates LaTeX equations, Greek symbols ($\theta, \alpha, \lambda, \Delta$), and chemical subscripts ($H_2O, CO_2$) into naturally spoken audio.
 
 ### 5. 📄 Multi-Format Paper & Syllabus Upload
-- Upload snapshots or documents of problems, textbook exercises, and test papers.
-- Supports **Images (PNG, JPG, WEBP)**, **PDFs (.pdf)**, and **Text notes (.txt)**.
-- Automatic AI extraction of chapter, topic, and numerical data for targeted solutions.
+- Students can upload snapshots or documents of homework questions, textbook pages, and school test papers.
+- Supports **Images (`.png`, `.jpg`, `.webp`)**, **PDFs (`.pdf`)**, and **Text notes (`.txt`)**.
+- The server extracts the problem statement, identifies the chapter, and maps it directly against the WBBSE syllabus.
 
-### 6. 🎥 Verified YouTube Recommendations
-- Curated video lectures aligned with the exact WBBSE Class 10 topic.
-- Live availability validation via YouTube oEmbed API to eliminate broken, private, or hallucinated video links.
+### 6. 🎥 Hallucination-Free YouTube Educational Grounding
+- Curated video lectures aligned with WBBSE Class 10 concepts.
+- Every YouTube link is actively validated via YouTube's oEmbed protocol before being rendered, completely eliminating broken, private, or hallucinated video embeds.
 
-### 7. 🔒 Secure Google Authentication & Firestore Sync
-- Google OAuth login with email verification.
-- Cloud Firestore persistence for sessions, chat history, attachments, and voice transcripts.
-- Strict security rules with owner isolation, input sanitization, and size constraints.
-
----
-
-## 🛠️ Tech Stack
-
-- **Frontend:** React 19, TypeScript, Vite 8, Tailwind CSS 4, Motion (Framer Motion 12), Lucide Icons, React Markdown & Remark GFM
-- **Backend Server:** Node.js, Express, TypeScript via TSX, WebSocket (`ws`)
-- **AI Models & SDKs:**
-  - `@google/genai` (Google Gen AI SDK)
-  - `gemini-4-hydrogen` (Deep reasoning & Google Search grounding)
-  - `gemini-3.8-live` (Low-latency bidirectional audio voice tutor)
-  - `gemini-3.8-flash-lite-tts` (Teacher speech synthesis)
-  - `gemini-3.1-flash-lite` (Fast fallback inference)
-- **Database & Auth:** Google Firebase Auth, Cloud Firestore
+### 7. 🔐 Guest Student Mode & Cloud Persistence
+- **Instant Guest Mode**: Students can jump in, ask questions, solve problems, and practice voice viva immediately with zero friction using local storage.
+- **Google Sign-In**: Optional Google OAuth login synchronizes study sessions, uploaded papers, and chat history seamlessly across phones, tablets, and laptops via hardened Cloud Firestore rules.
 
 ---
 
-## 🚀 Getting Started
+## 🏗️ System Architecture
+
+```mermaid
+flowchart TD
+    subgraph Client["Student Browser (Vite + React 19)"]
+        UI["Scholar UI & Landing Page"]
+        Chalk["Blackboard Problem Solver"]
+        Voice["Live Voice Viva Modal"]
+        GuestStore["Local Storage (Guest Mode)"]
+    end
+
+    subgraph Backend["Full-Stack Node.js Server (Render / Local)"]
+        Server["Express + TSX Server (server.ts)"]
+        WSS["WebSocket Server (/api/live-ws)"]
+        PYQEngine["10-Year PYQ Knowledge Base"]
+        TTS["Audio Speech Normalizer (/api/tts)"]
+    end
+
+    subgraph GoogleAI["Google Gemini Models"]
+        GeminiFlash["gemini-2.5-flash / gemini-4-hydrogen\n(Deep Reasoning & Search Grounding)"]
+        GeminiLive["gemini-3.8-live\n(Realtime Audio Bidirectional WebSocket)"]
+    end
+
+    subgraph CloudServices["Firebase Cloud Services"]
+        FirebaseAuth["Firebase Auth (Google OAuth)"]
+        Firestore["Cloud Firestore (Hardened Security Rules)"]
+    end
+
+    UI -->|"HTTP POST /api/research"| Server
+    Chalk -->|"HTTP POST /api/tts"| TTS
+    Voice <-->|"Bidirectional PCM Audio (WSS)"| WSS
+    Server --> PYQEngine
+    Server -->|"Generate Content"| GeminiFlash
+    WSS <-->|"Live Audio Stream"| GeminiLive
+    UI <-->|"Auth Tokens"| FirebaseAuth
+    UI <-->|"Session Sync"| Firestore
+    UI <-->|"Offline Cache"| GuestStore
+```
+
+---
+
+## 🛠️ Tech Stack & Libraries
+
+| Domain | Technologies |
+|---|---|
+| **Frontend Framework** | [React 19](https://react.dev/), [TypeScript 5](https://www.typescriptlang.org/), [Vite 8](https://vite.dev/) |
+| **Styling & Animation** | [Tailwind CSS 4](https://tailwindcss.com/), [Motion (Framer Motion 12)](https://motion.dev/), [Lucide React](https://lucide.dev/) |
+| **Typography & Markdown** | [React Markdown](https://github.com/remarkjs/react-markdown), [Remark GFM](https://github.com/remarkjs/remark-gfm), KaTeX notation support |
+| **Backend Runtime** | [Node.js 22+](https://nodejs.org/), [Express 4](https://expressjs.com/), [TSX](https://github.com/privatenumber/tsx), [WebSocket (`ws`)](https://github.com/websockets/ws) |
+| **AI Models & SDK** | [`@google/genai`](https://www.npmjs.com/package/@google/genai) — `gemini-2.5-flash`, `gemini-3.8-live`, `gemini-3.8-flash-lite-tts` |
+| **Cloud Database & Auth** | [Google Firebase Auth](https://firebase.google.com/docs/auth), [Cloud Firestore](https://firebase.google.com/docs/firestore) |
+
+---
+
+## ⚡ Getting Started (Local Development)
 
 ### Prerequisites
-- **Node.js**: v20.0.0 or higher
-- **npm** or **bun** / **yarn**
-- **Gemini API Key**: Obtain from [Google AI Studio](https://aistudio.google.com/)
+- **Node.js** v20.0.0 or higher
+- **npm** (or `pnpm` / `bun`)
+- A **Google Gemini API Key** from [Google AI Studio](https://aistudio.google.com/)
 
-### 1. Clone & Install Dependencies
+### 1. Clone the Repository
 ```bash
-git clone https://github.com/pradipta2005/madhyamik-ai-mitra.git
-cd madhyamik-ai-mitra
+git clone https://github.com/pradipta2005/madhyamik-AI-mitra.git
+cd madhyamik-AI-mitra
+```
+
+### 2. Install Dependencies
+```bash
 npm install
 ```
 
-### 2. Configure Environment Variables
-Copy the example environment file:
+### 3. Setup Environment Variables
+Create a `.env` file in the project root:
 ```bash
 cp .env.example .env
 ```
-Edit `.env` and set your configuration:
+Open `.env` and add your Gemini API Key:
 ```env
-# Gemini API Key (Required)
-GEMINI_API_KEY="your-gemini-api-key-here"
-
-# Server Host URL (Default: http://localhost:3000)
-APP_URL="http://localhost:3000"
+GEMINI_API_KEY="your-google-gemini-api-key-here"
+PORT=3000
 ```
+*(Your Firebase configuration is already pre-configured in `firebase-applet-config.json` for client authentication and database sync).*
 
-### 3. Firebase Authentication & Authorized Domains
-If you encounter `Firebase: Error (auth/unauthorized-domain)` during Google Sign-In, Firebase requires your running domain to be whitelisted:
-1. Go to the [Firebase Console Authentication Settings](https://console.firebase.google.com/project/gen-lang-client-0687209894/authentication/settings).
-2. Under the **Settings** tab, scroll down to **Authorized domains**.
-3. Click **Add domain** and enter your hostname (e.g. `localhost` or your custom domain).
-4. *Quick tip:* Accessing via `http://localhost:3000` rather than `http://127.0.0.1:3000` is recommended, as Firebase includes `localhost` by default.
-5. *Guest Student Mode:* You can also click **Continue as Guest** to test and use all research, blackboard solver, and voice features immediately using local storage without Google authentication.
-
-### 4. Run Development Server
+### 4. Start the Development Server
 ```bash
 npm run dev
 ```
-The application will start on `http://localhost:3000`.
-
-### 5. Build for Production
-```bash
-# Build optimized production bundle
-npm run build
-
-# Start production server
-npm start
-```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🧪 Testing & Code Quality
+## 🧪 Testing & Verification
 
-Run the comprehensive unit test suite:
+The project includes an automated test suite verifying prompt classification, Bengali token normalization, PYQ retrieval, and Firestore security rules:
+
 ```bash
+# Run unit & security tests
 npm test
-```
-Tests cover:
-- Language detection (Bengali Unicode, Banglish, English)
-- Query intent classification (PYQ, Concept, Problem Solve, Voice)
-- PYQ knowledge base search across all 7 subjects
-- Assistant response block parsing & YouTube recommendation constraints
-- Date grouping for study sessions
-- Live voice transcript summary formatting
-- Blackboard section extraction & Firestore sanitization
-- Audio phonetic normalization for mathematical and scientific symbols
-- Cloud Firestore security rules specification
 
-To check TypeScript types:
-```bash
+# Run TypeScript type check
 npm run lint
-```
 
-To clean build artifacts:
-```bash
-npm run clean
-```
-
----
-
-## 📁 Project Structure
-
-```
-madhyamik-ai-mitra/
-├── .env.example                  # Environment configuration template
-├── eslint.config.mjs             # ESLint configuration
-├── firebase-applet-config.json   # Firebase client configuration
-├── firebase-blueprint.json       # Schema definition for Firestore collections
-├── firestore.rules               # Production Firestore security rules
-├── firestore.rules.test.ts       # Test suite for Firestore rules
-├── index.html                    # Application entry HTML
-├── metadata.json                 # AI Studio applet metadata
-├── package.json                  # Dependencies & scripts
-├── public/                       # Static assets, web app manifest, icons
-├── security_spec.md              # Security rules architecture documentation
-├── server.ts                     # Express + WebSocket backend server
-├── tsconfig.json                 # TypeScript compiler configuration
-├── vite.config.ts                # Vite build configuration with chunk splitting
-└── src/
-    ├── App.tsx                   # Main application workspace & state manager
-    ├── firebase.ts               # Firebase initialization & Firestore operations
-    ├── index.css                 # Global styling & Tailwind CSS directives
-    ├── main.tsx                  # React DOM root entry
-    ├── types.ts                  # Shared TypeScript interfaces & types
-    ├── assets/                   # Images and visual assets
-    ├── components/               # React UI components
-    │   ├── BrandLogo.tsx         # Handcrafted Scholar's Folio brand emblem
-    │   ├── ChatInputBar.tsx      # Multi-modal input with speech recognition
-    │   ├── ChatMessageBubble.tsx # Message rendering with Markdown & cards
-    │   ├── ErrorBoundary.tsx     # Graceful error fallback
-    │   ├── LandingPage.tsx       # Interactive landing page
-    │   ├── LiveVoiceModal.tsx    # Gemini Live WebSocket voice viva interface
-    │   ├── ProblemSolveCard.tsx  # Interactive Blackboard teacher solution card
-    │   ├── ProblemSolverBanner.tsx # Subject scope notice banner
-    │   ├── PyqCard.tsx           # WBBSE & ABTA/WBTA PYQ card with trend notes
-    │   ├── Sidebar.tsx           # Study session history & file upload manager
-    │   ├── SignInGateModal.tsx   # Google OAuth authentication gate modal
-    │   ├── SubjectBar.tsx        # 7-subject filter & lock toolbar
-    │   ├── YouTubeCard.tsx       # Verified YouTube recommendation card
-    │   └── ui/
-    │       └── CraftMotion.tsx   # Micro-interactions & animations
-    ├── data/
-    │   └── wbbse_pyq_bank.json   # 10-year WBBSE PYQ structured database
-    └── utils/
-        ├── wbbseResearch.ts      # Research engine, text normalization, parsing
-        └── wbbseResearch.test.ts # Core utility test suite
+# Compile optimized production bundle
+npm run build
 ```
 
 ---
 
-## 📡 API Endpoints
+## 🌐 Production Deployment
 
-| Endpoint | Method | Description |
-|---|---|---|
-| `/api/health` | `GET` | Health check & system status (uptime, pyq count, Gemini status) |
-| `/api/research` | `POST` | Core research engine with Google Search Grounding & PYQ analysis |
-| `/api/tts` | `POST` | Teacher speech audio synthesis for blackboard solutions |
-| `/api/upload-pdf` | `POST` | Multi-format document / question paper analyzer |
-| `/api/live-ws` | `WS` | Full-duplex WebSocket for Gemini Live Audio Viva Tutoring |
+### Deploying to Render (Recommended)
+This repository is pre-configured for instant deployment on [Render](https://render.com):
+1. Create a new **Web Service** on Render and select your GitHub repository.
+2. Set the configuration:
+   - **Environment:** `Node`
+   - **Build Command:** `npm install && npm run build`
+   - **Start Command:** `npm start`
+3. Add the environment variable:
+   - `GEMINI_API_KEY`: *(Your Google AI Studio API key)*
+4. Once deployed, copy your Render domain (`your-app.onrender.com`) and add it to **Firebase Console → Authentication → Settings → Authorized domains**.
 
 ---
 
-## 📄 License & Credits
+## 🔒 Security & Privacy
 
-Created by [Pradipta](https://pradipta2005.github.io/) for West Bengal Board Class 10 (Madhyamik) students.
-Educational use. Built with Google Gemini API & Firebase.
+- **Server-Side API Key Protection**: The secret `GEMINI_API_KEY` is never exposed to the client bundle. All Gemini inference requests pass through the authenticated Express proxy.
+- **Firebase Firestore Security Rules**: Documents are locked under `/users/{userId}/...` paths. Cloud rules enforce owner verification (`request.auth.uid == userId`) and include a strict global default-deny safety net.
+- **Data Minimization**: Guest students can use all core features purely inside `localStorage` without handing over an email or personal details.
+
+---
+
+## 👨‍💻 Author & Acknowledgments
+
+Crafted with dedication by **[Pradipta](https://github.com/pradipta2005)** for West Bengal Board students.
+
+- **Syllabus Reference:** West Bengal Board of Secondary Education (WBBSE), Nivedita Bhavan, Kolkata.
+- **Test Paper References:** All Bengal Teachers' Association (ABTA) & West Bengal Teachers' Association (WBTA) Madhyamik Test Papers.
+- **AI Infrastructure:** Google DeepMind & Google AI Studio (Gemini Live API & Hydrogen reasoning).
+
+---
+
+<p align="center">
+  <sub>Made with ❤️ for Madhyamik 2026 aspirants across West Bengal. শুভকামনা! 🌟</sub>
+</p>
