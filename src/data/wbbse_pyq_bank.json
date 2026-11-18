@@ -1,0 +1,1142 @@
+[
+  {
+    "id": "ps-light-01",
+    "subject": "Physical Science",
+    "chapter": "Light",
+    "chapterBn": "আলো",
+    "questionEn": "State Snell's law of refraction of light. Explain why a prism produces dispersion of white light, and mention which colour deviates the most and the least.",
+    "questionBn": "আলোর প্রতিসরণের স্নেলের সূত্রটি বিবৃত করো। প্রিজমের মধ্যে দিয়ে সাদা আলোর বিচ্ছুরণ কেন ঘটে এবং কোন বর্ণের চ্যুতি সর্বাধিক ও কোন বর্ণের চ্যুতি সর্বনিম্ন হয় লেখো।",
+    "examYears": [
+      2017,
+      2019,
+      2022,
+      2024
+    ],
+    "marks": 3,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "Refraction laws and prism dispersion alternate every 2–3 years in WBBSE Physical Science Section C/D.",
+    "trendNoteBn": "মধ্যশিক্ষা পর্ষদের ভৌত বিজ্ঞানে প্রতি ২-৩ বছর অন্তর প্রতিসরণের সূত্র ও প্রিজমের বিচ্ছুরণ থেকে প্রশ্ন আসে।",
+    "keywords": [
+      "light",
+      "refraction",
+      "snell",
+      "prism",
+      "dispersion",
+      "আলো",
+      "প্রতিসরণ",
+      "স্নেল",
+      "প্রিজম",
+      "বিচ্ছুরণ"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2025"
+    ]
+  },
+  {
+    "id": "ps-light-02",
+    "subject": "Physical Science",
+    "chapter": "Light",
+    "chapterBn": "আলো",
+    "questionEn": "Draw a neat ray diagram showing the formation of a virtual, erect, and magnified image by a convex lens. Mention one practical use of this property.",
+    "questionBn": "একটি উত্তল লেন্সের সামনে বস্তু কোথায় রাখলে অসদ, সমশীর্ষ ও বিবর্ধিত প্রতিবিম্ব গঠিত হয় তা রশ্মিচিত্রের সাহায্যে দেখাও এবং এর একটি ব্যবহারিক প্রয়োগ লেখো।",
+    "examYears": [
+      2018,
+      2020,
+      2023,
+      2025
+    ],
+    "marks": 3,
+    "importanceLevel": "Repeated Trend",
+    "trendNoteEn": "Ray diagrams of convex lens image formation and magnifying glass applications appear consistently across recent papers.",
+    "trendNoteBn": "উত্তল লেন্সের রশ্মিচিত্র ও বিবর্ধক কাচ হিসেবে ব্যবহার সাম্প্রতিক প্রশ্নপত্রে নিয়মিত দেখা যায়।",
+    "keywords": [
+      "light",
+      "lens",
+      "convex",
+      "ray diagram",
+      "magnified",
+      "আলো",
+      "উত্তল লেন্স",
+      "রশ্মিচিত্র",
+      "প্রতিবিম্ব"
+    ],
+    "testPaperRefs": [
+      "ABTA Madhyamik Test Paper 2024–25",
+      "WBTA Madhyamik Test Paper 2024–25"
+    ]
+  },
+  {
+    "id": "ps-light-03",
+    "subject": "Physical Science",
+    "chapter": "Light",
+    "chapterBn": "আলো",
+    "questionEn": "What is myopia (near-sightedness)? State two causes of this eye defect and specify which type of lens is used to correct it.",
+    "questionBn": "মায়োপিয়া বা হ্রস্বদৃষ্টি কী? এই দৃষ্টিত্রুটির দুটি কারণ এবং প্রতিকারের জন্য কোন ধরনের লেন্স ব্যবহার করা হয় লেখো।",
+    "examYears": [
+      2016,
+      2019,
+      2023,
+      2026
+    ],
+    "marks": 3,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "Human eye defects (Myopia & Hypermetropia) are high-yield conceptual questions in WBBSE Group C.",
+    "trendNoteBn": "চোখের ত্রুটি (মায়োপিয়া ও হাইপারমেট্রোপিয়া) থেকে পর্ষদের পরীক্ষায় প্রায় প্রতি বছরই সংক্ষিপ্ত প্রশ্ন থাকে।",
+    "keywords": [
+      "light",
+      "eye",
+      "myopia",
+      "hypermetropia",
+      "lens",
+      "আলো",
+      "মায়োপিয়া",
+      "হ্রস্বদৃষ্টি",
+      "চোখ"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2025"
+    ]
+  },
+  {
+    "id": "ps-gas-01",
+    "subject": "Physical Science",
+    "chapter": "Behaviour of Gases",
+    "chapterBn": "গ্যাসের আচরণ",
+    "questionEn": "State Charles's law and derive the concept of absolute zero temperature (-273°C) from it. Establish the ideal gas equation PV = nRT.",
+    "questionBn": "চার্লসের সূত্রটি বিবৃত করো এবং সূত্রটি থেকে পরমশূন্য উষ্ণতার (-273°C) ধারণা দাও। আদর্শ গ্যাস সমীকরণ PV = nRT প্রতিষ্ঠা করো।",
+    "examYears": [
+      2017,
+      2020,
+      2022,
+      2025
+    ],
+    "marks": 3,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "Gas law derivations and numericals on PV=nRT or P1V1/T1 = P2V2/T2 carry guaranteed 3-mark weightage.",
+    "trendNoteBn": "চার্লসের সূত্র থেকে পরমশূন্য উষ্ণতা নির্ণয় ও PV=nRT সম্পর্কিত অঙ্ক ৩ নম্বরের প্রশ্নে অত্যন্ত গুরুত্বপূর্ণ।",
+    "keywords": [
+      "gas",
+      "charles",
+      "boyle",
+      "absolute zero",
+      "ideal gas",
+      "pv=nrt",
+      "গ্যাস",
+      "চার্লস",
+      "বয়েল",
+      "পরমশূন্য"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2024–25"
+    ]
+  },
+  {
+    "id": "ps-elec-01",
+    "subject": "Physical Science",
+    "chapter": "Current Electricity",
+    "chapterBn": "চলতড়িৎ",
+    "questionEn": "State Ohm's law. Define resistance and mention the factors on which the resistance of a conductor depends. Find the equivalent resistance of two resistors connected in parallel.",
+    "questionBn": "ওহমের সূত্রটি বিবৃত করো। পরিবাহীর রোধ কাকে বলে এবং রোধ কী কী বিষয়ের উপর নির্ভর করে? সমান্তরাল সমবায়ে যুক্ত দুটি রোধের তুল্য রোধের রাশিমালা নির্ণয় করো।",
+    "examYears": [
+      2016,
+      2018,
+      2021,
+      2024,
+      2026
+    ],
+    "marks": 5,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "Ohm's law, Joule's heating effect, and resistor combination numericals are tested in almost every Madhyamik paper.",
+    "trendNoteBn": "ওহমের সূত্র, জুলের তাপীয় ফল এবং রোধের সমবায়ের অঙ্ক প্রায় প্রতিটি মাধ্যমিক পরীক্ষায় আসে।",
+    "keywords": [
+      "electricity",
+      "ohm",
+      "resistance",
+      "parallel",
+      "joule",
+      "চলতড়িৎ",
+      "ওহম",
+      "রোধ",
+      "সমান্তরাল সমবায়"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2025"
+    ]
+  },
+  {
+    "id": "ps-env-01",
+    "subject": "Physical Science",
+    "chapter": "Concerns about Environment",
+    "chapterBn": "পরিবেশের জন্য ভাবনা",
+    "questionEn": "What is ozone hole? Write two harmful effects of ozone layer depletion and explain why methane hydrate is called fire ice.",
+    "questionBn": "ওজোন গহ্বর কী? ওজোন স্তর ক্ষয়ের দুটি ক্ষতিকর প্রভাব লেখো এবং মিথেন হাইড্রেটকে 'আগুনে বরফ' বলা হয় কেন?",
+    "examYears": [
+      2018,
+      2022,
+      2024
+    ],
+    "marks": 2,
+    "importanceLevel": "Repeated Trend",
+    "trendNoteEn": "Short 1-mark and 2-mark questions from Chapter 1 focus heavily on Ozone depletion, Greenhouse gases, and CBM/Methane Hydrate.",
+    "trendNoteBn": "প্রথম অধ্যায় থেকে ওজোন স্তর ক্ষয়, গ্রিনহাউস গ্যাস ও মিথেন হাইড্রেটের মতো ছোট প্রশ্ন নিয়মিত আসে।",
+    "keywords": [
+      "environment",
+      "ozone",
+      "greenhouse",
+      "methane hydrate",
+      "পরিবেশ",
+      "ওজোন",
+      "গ্রিনহাউস",
+      "মিথেন হাইড্রেট"
+    ],
+    "testPaperRefs": [
+      "ABTA Madhyamik Test Paper 2024–25",
+      "WBTA Madhyamik Test Paper 2024–25"
+    ]
+  },
+  {
+    "id": "ps-org-01",
+    "subject": "Physical Science",
+    "chapter": "Organic Chemistry",
+    "chapterBn": "জৈব রসায়ন",
+    "questionEn": "Write the IUPAC names of CH3-CH2-CHO and CH3-COOH. How does methane react with chlorine in diffused sunlight?",
+    "questionBn": "CH3-CH2-CHO এবং CH3-COOH যৌগ দুটির IUPAC নাম লেখো। বিক্ষিপ্ত সূর্যালোকে মিথেনের সাথে ক্লোরিনের বিক্রিয়া সমীকরণসহ লেখো।",
+    "examYears": [
+      2017,
+      2019,
+      2023,
+      2025
+    ],
+    "marks": 3,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "IUPAC nomenclature, functional groups, and substitution/addition reactions of methane/ethylene appear annually.",
+    "trendNoteBn": "জৈব রসায়নে IUPAC নামকরণ ও মিথেন/ইথিলিনের বিক্রিয়া প্রতি বছরই পরীক্ষায় থাকে।",
+    "keywords": [
+      "organic",
+      "iupac",
+      "methane",
+      "alkane",
+      "functional group",
+      "জৈব রসায়ন",
+      "মিথেন",
+      "কার্যকরী মূলক"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2025"
+    ]
+  },
+  {
+    "id": "ls-coord-01",
+    "subject": "Life Science",
+    "chapter": "Control and Coordination",
+    "chapterBn": "জীবজগতে নিয়ন্ত্রণ ও সমন্বয়",
+    "questionEn": "Draw a neat labelled diagram of a neuron (nerve cell) and label: Dendron, Axon, Myelin sheath, and Node of Ranvier.",
+    "questionBn": "একটি আদর্শ নিউরোনের (স্নায়ুকোষ) পরিচ্ছন্ন চিত্র অঙ্কন করে ডেনড্রন, অ্যাক্সন, মায়েলিন আবরণী ও র‍্যানভিয়ারের পর্ব অংশগুলি চিহ্নিত করো।",
+    "examYears": [
+      2017,
+      2020,
+      2023,
+      2026
+    ],
+    "marks": 5,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "WBBSE Section D always carries a compulsory 5-mark drawing (3+2) rotating between Neuron, Reflex Arc, Human Eye, and Metaphase.",
+    "trendNoteBn": "জীবন বিজ্ঞানের বিভাগ 'ঘ'-তে ৫ নম্বরের চিত্রাঙ্কনে নিউরোন, প্রতিবর্ত চাপ বা চোখের লম্বচ্ছেদ ঘুরিয়ে ফিরিয়ে আসে।",
+    "keywords": [
+      "neuron",
+      "nerve",
+      "diagram",
+      "reflex arc",
+      "coordination",
+      "নিউরোন",
+      "স্নায়ুকোষ",
+      "চিত্র",
+      "প্রতিবর্ত"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2024–25"
+    ]
+  },
+  {
+    "id": "ls-coord-02",
+    "subject": "Life Science",
+    "chapter": "Control and Coordination",
+    "chapterBn": "জীবজগতে নিয়ন্ত্রণ ও সমন্বয়",
+    "questionEn": "State three differences between plant hormones and animal hormones. Mention the role of Auxin in phototropism and apical dominance.",
+    "questionBn": "উদ্ভিদ হরমোন ও প্রাণী হরমোনের মধ্যে তিনটি পার্থক্য লেখো। ফটোট্রপিক চলন ও অগ্রস্থ প্রকটতায় অক্সিন হরমোনের ভূমিকা উল্লেখ করো।",
+    "examYears": [
+      2018,
+      2021,
+      2024
+    ],
+    "marks": 5,
+    "importanceLevel": "Repeated Trend",
+    "trendNoteEn": "Hormone functions (Auxin, Gibberellin, Insulin, Adrenaline) form the core of Chapter 1 long and short questions.",
+    "trendNoteBn": "অক্সিন, জিব্বেরেলিন ও ইনসুলিন হরমোনের ভূমিকা ও পার্থক্য থেকে প্রতি বছর প্রশ্ন থাকে।",
+    "keywords": [
+      "hormone",
+      "auxin",
+      "gibberellin",
+      "phototropism",
+      "insulin",
+      "হরমোন",
+      "অক্সিন",
+      "ফটোট্রপিক",
+      "উদ্ভিদ হরমোন"
+    ],
+    "testPaperRefs": [
+      "ABTA Madhyamik Test Paper 2024–25",
+      "WBTA Test Paper 2024"
+    ]
+  },
+  {
+    "id": "ls-cont-01",
+    "subject": "Life Science",
+    "chapter": "Continuity of Life",
+    "chapterBn": "জীবনের প্রবহমানতা",
+    "questionEn": "Why is meiosis called reductional division? State three differences between mitosis and meiosis. Draw the metaphase stage of mitosis in an animal cell.",
+    "questionBn": "মিয়োসিসকে হ্রাস বিভাজন বলা হয় কেন? মাইটোসিস ও মিয়োসিসের মধ্যে তিনটি পার্থক্য লেখো। প্রাণীকোষের মাইটোসিসের মেটাফেজ দশার চিত্র অঙ্কন করো।",
+    "examYears": [
+      2016,
+      2019,
+      2022,
+      2025
+    ],
+    "marks": 5,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "Cell division comparisons, DNA vs RNA, and alternation of generations in fern are top-scoring 3 and 5 mark questions.",
+    "trendNoteBn": "কোষ বিভাজনের পার্থক্য ও মেটাফেজ/অ্যানাফেজ দশার চিত্র মাধ্যমিক জীবন বিজ্ঞানে অত্যন্ত প্রচলিত প্রশ্ন।",
+    "keywords": [
+      "mitosis",
+      "meiosis",
+      "cell division",
+      "metaphase",
+      "chromosome",
+      "মাইটোসিস",
+      "মিয়োসিস",
+      "কোষ বিভাজন",
+      "মেটাফেজ"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2024–25"
+    ]
+  },
+  {
+    "id": "ls-heredity-01",
+    "subject": "Life Science",
+    "chapter": "Heredity and Common Genetic Diseases",
+    "chapterBn": "বংশগতি এবং কয়েকটি সাধারণ জিনগত রোগ",
+    "questionEn": "Explain Mendel's law of independent assortment using a dihybrid cross checkerboard (pea plant: Yellow-Round vs Green-Wrinkled). Write the phenotypic ratio.",
+    "questionBn": "মেন্ডেলের দ্বিসংকর জনন পরীক্ষার সাহায্যে স্বাধীন বিন্যাসের সূত্রটি চেকারবোর্ডের মাধ্যমে ব্যাখ্যা করো এবং ফিনোটাইপিক অনুপাতটি লেখো।",
+    "examYears": [
+      2017,
+      2020,
+      2023,
+      2025
+    ],
+    "marks": 5,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "Checkerboard crosses (Monohybrid/Dihybrid or Colour blindness/Thalassemia) appear in Section D every single year.",
+    "trendNoteBn": "একসংকর/দ্বিসংকর জননের চেকারবোর্ড অথবা থ্যালাসেমিয়া/বর্ণান্ধতার বংশগতি প্রতি বছরই ৫ নম্বরের প্রশ্নে থাকে।",
+    "keywords": [
+      "mendel",
+      "heredity",
+      "dihybrid",
+      "monohybrid",
+      "thalassemia",
+      "বংশগতি",
+      "মেন্ডেল",
+      "দ্বিসংকর",
+      "থ্যালাসেমিয়া"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2025"
+    ]
+  },
+  {
+    "id": "ls-evol-01",
+    "subject": "Life Science",
+    "chapter": "Evolution and Adaptation",
+    "chapterBn": "অভিব্যক্তি ও অভিযোজন",
+    "questionEn": "Distinguish between homologous and analogous organs with examples. Mention two adaptive features of Sundari plant and camel.",
+    "questionBn": "সমসংস্থ ও সমবৃত্তীয় অঙ্গের মধ্যে উদাহরণসহ পার্থক্য লেখো। সুন্দরী গাছ ও উটের দুটি করে অভিযোজনগত বৈশিষ্ট্য উল্লেখ করো।",
+    "examYears": [
+      2018,
+      2021,
+      2024,
+      2026
+    ],
+    "marks": 3,
+    "importanceLevel": "Repeated Trend",
+    "trendNoteEn": "Homologous vs Analogous organs and adaptive features of Sundari, Cactus, Rohu fish, and Pigeon are staple 2–3 mark items.",
+    "trendNoteBn": "সমসংস্থ ও সমবৃত্তীয় অঙ্গ এবং সুন্দরী, ক্যাকটাস ও উটের অভিযোজনগত বৈশিষ্ট্য বারবার পরীক্ষায় এসেছে।",
+    "keywords": [
+      "evolution",
+      "adaptation",
+      "homologous",
+      "analogous",
+      "sundari",
+      "অভিব্যক্তি",
+      "অভিযোজন",
+      "সমসংস্থ",
+      "সুন্দরী"
+    ],
+    "testPaperRefs": [
+      "ABTA Madhyamik Test Paper 2024–25",
+      "WBTA Madhyamik Test Paper 2024–25"
+    ]
+  },
+  {
+    "id": "ls-env-01",
+    "subject": "Life Science",
+    "chapter": "Environment and Its Resources",
+    "chapterBn": "পরিবেশ, তার সম্পদ এবং তাদের সংরক্ষণ",
+    "questionEn": "Describe the nitrogen cycle with a word-diagram, highlighting ammonification, nitrification, and denitrification. Mention two causes of biodiversity loss.",
+    "questionBn": "নাইট্রোজেন চক্রের পর্যায়গুলি (অ্যামোনিফিকেশন, নাইট্রিফিকেশন, ডিনাইট্রিফিকেশন) শব্দছকের সাহায্যে দেখাও। জীববৈচিত্র্য হ্রাসের দুটি কারণ লেখো।",
+    "examYears": [
+      2017,
+      2019,
+      2022,
+      2025
+    ],
+    "marks": 5,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "Nitrogen cycle, Biodiversity hotspots in India, PBR, and Tiger/Rhino conservation are guaranteed Chapter 5 topics.",
+    "trendNoteBn": "নাইট্রোজেন চক্র, হটস্পট, PBR ও বাঘ/গণ্ডার সংরক্ষণ থেকে প্রতি বছর বড় ও ছোট প্রশ্ন আসে।",
+    "keywords": [
+      "nitrogen cycle",
+      "biodiversity",
+      "conservation",
+      "pbr",
+      "hotspot",
+      "নাইট্রোজেন চক্র",
+      "জীববৈচিত্র্য",
+      "সংরক্ষণ"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2025"
+    ]
+  },
+  {
+    "id": "math-quad-01",
+    "subject": "Mathematics",
+    "chapter": "Quadratic Equations",
+    "chapterBn": "একচলবিশিষ্ট দ্বিঘাত সমীকরণ",
+    "questionEn": "State Sridhar Acharya's formula for solving ax^2 + bx + c = 0. If the roots of the equation (b-c)x^2 + (c-a)x + (a-b) = 0 are equal, prove that 2b = a + c.",
+    "questionBn": "শ্রীধর আচার্যের সূত্রটি লেখো। (b-c)x^2 + (c-a)x + (a-b) = 0 দ্বিঘাত সমীকরণের বীজদ্বয় সমান হলে প্রমাণ করো যে 2b = a + c।",
+    "examYears": [
+      2017,
+      2020,
+      2023,
+      2025
+    ],
+    "marks": 3,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "Discriminant conditions (b^2 - 4ac = 0) and boat/train word problems from Chapter 1 appear consistently in WBBSE Maths.",
+    "trendNoteBn": "দ্বিঘাত সমীকরণের নিরূপক সংক্রান্ত প্রমাণ এবং নৌকা-স্রোত বা ট্রেনের অঙ্ক ৩ নম্বরের জন্য অত্যন্ত গুরুত্বপূর্ণ।",
+    "keywords": [
+      "quadratic",
+      "sridhar acharya",
+      "roots",
+      "equation",
+      "দ্বিঘাত",
+      "শ্রীধর আচার্য",
+      "সমীকরণ"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2024–25"
+    ]
+  },
+  {
+    "id": "math-theorem-01",
+    "subject": "Mathematics",
+    "chapter": "Theorems Related to Circle",
+    "chapterBn": "বৃত্ত সংক্রান্ত উপপাদ্য",
+    "questionEn": "Prove that the angle subtended by an arc of a circle at the centre is double the angle subtended by it at any point on the remaining part of the circle.",
+    "questionBn": "প্রমাণ করো যে, কোনো বৃত্তের একটি বৃত্তচাপের দ্বারা গঠিত সম্মুখ কেন্দ্রস্থ কোণ ওই চাপের দ্বারা গঠিত যেকোনো বৃত্তস্থ কোণের দ্বিগুণ।",
+    "examYears": [
+      2016,
+      2019,
+      2022,
+      2025
+    ],
+    "marks": 5,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "WBBSE Maths Question 9 carries two 5-mark theorems (choose 1); Central vs Inscribed Angle, Cyclic Quadrilateral, and Pythagoras theorems rotate reliably.",
+    "trendNoteBn": "মাধ্যমিক গণিতে ৫ নম্বরের উপপাদ্যে কেন্দ্রস্থ কোণ, বৃত্তস্থ চতুর্ভুজ ও পিথাগোরাসের উপপাদ্য পালা করে আসে।",
+    "keywords": [
+      "theorem",
+      "circle",
+      "angle",
+      "pythagoras",
+      "cyclic",
+      "উপপাদ্য",
+      "বৃত্ত",
+      "কেন্দ্রস্থ কোণ",
+      "পিথাগোরাস"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2025"
+    ]
+  },
+  {
+    "id": "math-theorem-02",
+    "subject": "Mathematics",
+    "chapter": "Pythagoras Theorem",
+    "chapterBn": "পিথাগোরাসের উপপাদ্য",
+    "questionEn": "State and prove Pythagoras' theorem: In a right-angled triangle, the square of the hypotenuse is equal to the sum of the squares of the other two sides.",
+    "questionBn": "পিথাগোরাসের উপপাদ্যটি বিবৃত ও প্রমাণ করো: যেকোনো সমকোণী ত্রিভুজের অতিভুজের উপর অঙ্কিত বর্গক্ষেত্রের ক্ষেত্রফল অপর দুই বাহুর উপর অঙ্কিত বর্গক্ষেত্রদ্বয়ের ক্ষেত্রফলের সমষ্টির সমান।",
+    "examYears": [
+      2018,
+      2021,
+      2024,
+      2026
+    ],
+    "marks": 5,
+    "importanceLevel": "Repeated Trend",
+    "trendNoteEn": "Pythagoras theorem and its converse alternate closely with Tangent-Radius theorems in recent Board papers.",
+    "trendNoteBn": "পিথাগোরাসের উপপাদ্য ও তার বিপরীত উপপাদ্য এবং স্পর্শক সংক্রান্ত উপপাদ্যগুলি পরীক্ষায় বারবার আসে।",
+    "keywords": [
+      "pythagoras",
+      "theorem",
+      "right triangle",
+      "hypotenuse",
+      "পিথাগোরাস",
+      "উপপাদ্য",
+      "অতিভুজ"
+    ],
+    "testPaperRefs": [
+      "ABTA Madhyamik Test Paper 2024–25",
+      "WBTA Madhyamik Test Paper 2024–25"
+    ]
+  },
+  {
+    "id": "math-trig-01",
+    "subject": "Mathematics",
+    "chapter": "Trigonometry: Heights and Distances",
+    "chapterBn": "ত্রিকোণমিতি: উচ্চতা ও দূরত্ব",
+    "questionEn": "From the top of a 15 m high house, the angle of elevation of the top of a lighthouse is 30° and the angle of depression of its foot is 60°. Find the height of the lighthouse.",
+    "questionBn": "একটি ১৫ মিটার উঁচু বাড়ির ছাদ থেকে একটি লাইটহাউসের চূড়ার উন্নতি কোণ ৩০° এবং পাদদেশের অবনতি কোণ ৬০° হলে লাইটহাউসটির উচ্চতা নির্ণয় করো।",
+    "examYears": [
+      2017,
+      2020,
+      2023,
+      2025
+    ],
+    "marks": 5,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "Heights & Distances (angles of elevation and depression) carries a guaranteed 5-mark question in Question 14.",
+    "trendNoteBn": "উন্নতি ও অবনতি কোণ সংক্রান্ত উচ্চতা ও দূরত্ব অধ্যায় থেকে ৫ নম্বরের একটি অঙ্ক নিশ্চিতভাবে আসে।",
+    "keywords": [
+      "trigonometry",
+      "height",
+      "distance",
+      "elevation",
+      "depression",
+      "ত্রিকোণমিতি",
+      "উচ্চতা",
+      "দূরত্ব",
+      "উন্নতি কোণ"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2025"
+    ]
+  },
+  {
+    "id": "math-mens-01",
+    "subject": "Mathematics",
+    "chapter": "Mensuration: Cone and Sphere",
+    "chapterBn": "পরিমিতি: শঙ্কু ও গোলক",
+    "questionEn": "A solid metallic sphere of radius 6 cm is melted and recast into a right circular cone of height 24 cm. Find the radius of the base of the cone.",
+    "questionBn": "৬ সেমি ব্যাসার্ধের একটি নিরেট ধাতব গোলককে গলিয়ে ২৪ সেমি উচ্চতার একটি লম্ব বৃত্তাকার শঙ্কু তৈরি করা হলে শঙ্কুটির ভূমির ব্যাসার্ধ কত হবে?",
+    "examYears": [
+      2018,
+      2022,
+      2024
+    ],
+    "marks": 4,
+    "importanceLevel": "Repeated Trend",
+    "trendNoteEn": "Volume conservation (melting sphere into cone/cylinder) is the single most common 4-mark Mensuration problem pattern.",
+    "trendNoteBn": "গোলক গলিয়ে শঙ্কু বা চোঙ তৈরির আয়তন সংরক্ষণ সংক্রান্ত অঙ্ক পরিমিতির ৪ নম্বরের প্রশ্নে খুবই সাধারণ।",
+    "keywords": [
+      "mensuration",
+      "sphere",
+      "cone",
+      "cylinder",
+      "volume",
+      "পরিমিতি",
+      "গোলক",
+      "শঙ্কু",
+      "চোঙ"
+    ],
+    "testPaperRefs": [
+      "ABTA Madhyamik Test Paper 2024–25",
+      "WBTA Madhyamik Test Paper 2024–25"
+    ]
+  },
+  {
+    "id": "math-stat-01",
+    "subject": "Mathematics",
+    "chapter": "Statistics",
+    "chapterBn": "রাশিবিজ্ঞান",
+    "questionEn": "Find the median and mode from the given grouped frequency distribution table using the standard Madhyamik step-deviation / formula method.",
+    "questionBn": "প্রদত্ত শ্রেণিবদ্ধ পরিসংখ্যা বিভাজন তালিকা থেকে যৌগিক গড় (ক্রমবিচ্যুতি পদ্ধতি) ও মধ্যমা নির্ণয় করো।",
+    "examYears": [
+      2017,
+      2019,
+      2022,
+      2024,
+      2026
+    ],
+    "marks": 4,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "WBBSE Maths always gives two 4-mark Statistics questions (Mean/Median/Mode/Ogive), making it a high-accuracy scoring area.",
+    "trendNoteBn": "রাশিবিজ্ঞান থেকে গড়, মধ্যমা, সংখ্যাগুরু মান ও ওজাইভের মধ্যে দুটি ৪ নম্বরের প্রশ্ন প্রতি বছরই থাকে।",
+    "keywords": [
+      "statistics",
+      "mean",
+      "median",
+      "mode",
+      "ogive",
+      "রাশিবিজ্ঞান",
+      "গড়",
+      "মধ্যমা",
+      "সংখ্যাগুরু মান"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2025"
+    ]
+  },
+  {
+    "id": "hist-reform-01",
+    "subject": "History",
+    "chapter": "Reform: Characteristics and Observations",
+    "chapterBn": "সংস্কার: বৈশিষ্ট্য ও পর্যালোচনা",
+    "questionEn": "Evaluate the role of Raja Rammohan Roy and Ishwar Chandra Vidyasagar in 19th-century social and educational reform in Bengal.",
+    "questionBn": "ঊনবিংশ শতকের বাংলার সমাজ ও শিক্ষাসংস্কারে রাজা রামমোহন রায় এবং ঈশ্বরচন্দ্র বিদ্যাসাগরের অবদান আলোচনা করো।",
+    "examYears": [
+      2017,
+      2020,
+      2023,
+      2025
+    ],
+    "marks": 8,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "WBBSE History 8-mark long questions heavily favour 19th-century Bengal Renaissance reformers, Young Bengal, and Brahmo Samaj.",
+    "trendNoteBn": "ইতিহাসের ৮ নম্বরের বড় প্রশ্নে বাংলার নবজাগরণ, নব্যবঙ্গ, ব্রাহ্মসমাজ ও বিদ্যাসাগরের অবদান অত্যন্ত গুরুত্বপূর্ণ।",
+    "keywords": [
+      "history",
+      "renaissance",
+      "rammohan",
+      "vidyasagar",
+      "brahmo",
+      "ইতিহাস",
+      "নবজাগরণ",
+      "রামমোহন",
+      "বিদ্যাসাগর"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2024–25"
+    ]
+  },
+  {
+    "id": "hist-revolt-01",
+    "subject": "History",
+    "chapter": "Resistance and Rebellion",
+    "chapterBn": "প্রতিরোধ ও বিদ্রোহ",
+    "questionEn": "Analyze the causes and significance of the Santhal Rebellion (1855) and the Indigo Revolt (1859–60). What role did the 'Hindu Patriot' play in the Indigo Revolt?",
+    "questionBn": "সাঁওতাল বিদ্রোহ (১৮৫৫) এবং নীল বিদ্রোহের (১৮৫৯-৬০) কারণ ও গুরুত্ব বিশ্লেষণ করো। নীল বিদ্রোহে 'হিন্দু প্যাট্রিয়ট' পত্রিকার ভূমিকা কী ছিল?",
+    "examYears": [
+      2018,
+      2021,
+      2024,
+      2026
+    ],
+    "marks": 4,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "Tribal and peasant revolts (Santhal, Munda, Indigo, Wahabi/Faraizi) consistently appear in 4-mark and 8-mark sections.",
+    "trendNoteBn": "সাঁওতাল, মুণ্ডা ও নীল বিদ্রোহ থেকে ৪ ও ৮ নম্বরের প্রশ্ন প্রায় প্রতি বছরই আসে।",
+    "keywords": [
+      "santhal",
+      "indigo",
+      "revolt",
+      "rebellion",
+      "hindu patriot",
+      "সাঁওতাল",
+      "নীল বিদ্রোহ",
+      "হিন্দু প্যাট্রিয়ট"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2025"
+    ]
+  },
+  {
+    "id": "hist-1857-01",
+    "subject": "History",
+    "chapter": "Early Stages of Collective Action",
+    "chapterBn": "সংঘবদ্ধতার গোড়ার কথা",
+    "questionEn": "Discuss the nature of the Revolt of 1857. Why did educated Bengalis remain largely aloof from this revolt? Write a short note on Queen's Proclamation (1858).",
+    "questionBn": "১৮৫৭ সালের মহাবিদ্রোহের চরিত্র ও প্রকৃতি আলোচনা করো। শিক্ষিত বাঙালি সমাজ এই বিদ্রোহ থেকে দূরে ছিল কেন? মহারানির ঘোষণাপত্র (১৮৫৮) সম্পর্কে টীকা লেখো।",
+    "examYears": [
+      2017,
+      2019,
+      2022,
+      2025
+    ],
+    "marks": 8,
+    "importanceLevel": "Repeated Trend",
+    "trendNoteEn": "Nature of 1857 Revolt, Anandamath, Bharat Mata painting, and Gaganendranath's cartoons are recurring Chapter 4 anchors.",
+    "trendNoteBn": "মহাবিদ্রোহের প্রকৃতি, আনন্দমঠ, ভারতমাতা চিত্র ও গগনেন্দ্রনাথের ব্যঙ্গচিত্র চতুর্থ অধ্যায়ের প্রধান প্রশ্ন।",
+    "keywords": [
+      "1857",
+      "mahabidroho",
+      "queen proclamation",
+      "anandamath",
+      "bharat mata",
+      "মহাবিদ্রোহ",
+      "মহারানির ঘোষণাপত্র",
+      "ভারতমাতা"
+    ],
+    "testPaperRefs": [
+      "ABTA Madhyamik Test Paper 2024–25",
+      "WBTA Madhyamik Test Paper 2024–25"
+    ]
+  },
+  {
+    "id": "hist-20th-01",
+    "subject": "History",
+    "chapter": "Women, Students and Marginal People in 20th Century",
+    "chapterBn": "বিংশ শতকের ভারতে নারী, ছাত্র ও প্রান্তিক জনগোষ্ঠীর আন্দোলন",
+    "questionEn": "Evaluate the role of women (Pritilata Waddedar, Bina Das, Matangini Hazra) and students in the Anti-Partition, Civil Disobedience, and Quit India movements.",
+    "questionBn": "বঙ্গভঙ্গ বিরোধী, আইন অমান্য ও ভারত ছাড়ো আন্দোলনে নারী ও ছাত্র সমাজের ভূমিকা মূল্যায়ন করো। প্রীতিলতা ওয়াদ্দেদার ও মাতঙ্গিনী হাজরার অবদান লেখো।",
+    "examYears": [
+      2018,
+      2020,
+      2023,
+      2025
+    ],
+    "marks": 8,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "Chapter 7 (Women & Students in Freedom Struggle, Namasudra & Dalit debate) is a near-guaranteed 8-mark or 4-mark block.",
+    "trendNoteBn": "সপ্তম অধ্যায় থেকে সশস্ত্র বিপ্লবী আন্দোলনে নারী ও ছাত্রদের ভূমিকা প্রায় প্রতি বছর পরীক্ষায় আসে।",
+    "keywords": [
+      "women",
+      "students",
+      "pritilata",
+      "matangini",
+      "bina das",
+      "নারী",
+      "ছাত্র",
+      "প্রীতিলতা",
+      "মাতঙ্গিনী"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2025"
+    ]
+  },
+  {
+    "id": "geo-exo-01",
+    "subject": "Geography",
+    "chapter": "Exogenetic Processes and Landforms",
+    "chapterBn": "বহির্জাত প্রক্রিয়া ও তাদের দ্বারা সৃষ্ট ভূমিরূপ",
+    "questionEn": "Describe with labelled diagrams three landforms carved by erosional work of a river (V-shaped valley, Waterfall, Meander) or glacier (Cirque, U-shaped valley).",
+    "questionBn": "নদীর ক্ষয়কার্যের ফলে গঠিত তিনটি ভূমিরূপ (V-আকৃতির উপত্যকা, জলপ্রপাত, মন্থকূপ) অথবা হিমবাহের ক্ষয়কার্যের ফলে গঠিত তিনটি ভূমিরূপ চিত্রসহ বর্ণনা করো।",
+    "examYears": [
+      2017,
+      2019,
+      2022,
+      2024,
+      2026
+    ],
+    "marks": 5,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "Geography Section E (5 marks) always asks for 3 landforms with diagrams from River, Glacier, or Wind erosion/deposition.",
+    "trendNoteBn": "ভূগোলের ৫ নম্বরের প্রশ্নে নদী, হিমবাহ বা বায়ুর ক্ষয় ও সঞ্চয়কার্য দ্বারা গঠিত ৩টি ভূমিরূপ চিত্রসহ আসে।",
+    "keywords": [
+      "river",
+      "glacier",
+      "wind",
+      "landform",
+      "erosion",
+      "নদী",
+      "হিমবাহ",
+      "বায়ু",
+      "ভূমিরূপ"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2024–25"
+    ]
+  },
+  {
+    "id": "geo-atm-01",
+    "subject": "Geography",
+    "chapter": "Atmosphere",
+    "chapterBn": "বায়ুমণ্ডল",
+    "questionEn": "Explain the relationship between global pressure belts and planetary winds with a neat labelled diagram. Distinguish between cyclone and anticyclone.",
+    "questionBn": "পৃথিবীর নিয়ত বায়ুপ্রবাহের সাথে চাপ বলয়ের সম্পর্ক চিত্রসহ আলোচনা করো। ঘূর্ণবাত ও প্রতীপ ঘূর্ণবাতের মধ্যে পার্থক্য লেখো।",
+    "examYears": [
+      2018,
+      2021,
+      2023,
+      2025
+    ],
+    "marks": 5,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "Atmosphere 5-mark questions alternate among Heat Budget/Temperature variation, Pressure Belts-Planetary Winds, and Rainfall types.",
+    "trendNoteBn": "বায়ুমণ্ডল অধ্যায় থেকে চাপ বলয় ও নিয়ত বায়ুপ্রবাহ, উষ্ণতার তারতম্য ও বৃষ্টিপাতের শ্রেণিবিভাগ খুবই গুরুত্বপূর্ণ।",
+    "keywords": [
+      "atmosphere",
+      "pressure belt",
+      "planetary wind",
+      "cyclone",
+      "rainfall",
+      "বায়ুমণ্ডল",
+      "চাপ বলয়",
+      "নিয়ত বায়ু",
+      "বৃষ্টিপাত"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2025"
+    ]
+  },
+  {
+    "id": "geo-hydro-01",
+    "subject": "Geography",
+    "chapter": "Hydrosphere",
+    "chapterBn": "বারিমণ্ডল",
+    "questionEn": "Explain the causes of ocean currents and tides (spring tide and neap tide) with diagrams.",
+    "questionBn": "সমুদ্রস্রোত সৃষ্টির কারণগুলি আলোচনা করো এবং ভরা কোটাল ও মরা কোটাল কীভাবে সৃষ্টি হয় চিত্রসহ ব্যাখ্যা করো।",
+    "examYears": [
+      2017,
+      2020,
+      2024
+    ],
+    "marks": 5,
+    "importanceLevel": "Repeated Trend",
+    "trendNoteEn": "Tides (Syzygy, Spring & Neap tides) and Ocean Currents impact on climate are core Hydrosphere 3- and 5-mark items.",
+    "trendNoteBn": "বারিমণ্ডল থেকে সমুদ্রস্রোতের কারণ এবং জোয়ার-ভাটা (ভরা ও মরা কোটাল) থেকে নিয়মিত প্রশ্ন আসে।",
+    "keywords": [
+      "hydrosphere",
+      "tide",
+      "ocean current",
+      "spring tide",
+      "বারিমণ্ডল",
+      "জোয়ার ভাটা",
+      "সমুদ্রস্রোত",
+      "ভরা কোটাল"
+    ],
+    "testPaperRefs": [
+      "ABTA Madhyamik Test Paper 2024–25",
+      "WBTA Madhyamik Test Paper 2024–25"
+    ]
+  },
+  {
+    "id": "geo-india-01",
+    "subject": "Geography",
+    "chapter": "India: Physical & Economic Environment",
+    "chapterBn": "ভারত: প্রাকৃতিক ও অর্থনৈতিক পরিবেশ",
+    "questionEn": "Explain the favourable geographical conditions for the cultivation of Rice/Wheat/Cotton in India. Discuss why the petrochemical or IT industry has grown in western/southern India.",
+    "questionBn": "ভারতে ধান/গম/কার্পাস চাষের অনুকূল ভৌগোলিক পরিবেশ আলোচনা করো। পশ্চিম ভারতে কার্পাস বয়ন শিল্প অথবা পূর্ব ভারতে লৌহ-ইস্পাত শিল্প গড়ে ওঠার কারণ লেখো।",
+    "examYears": [
+      2016,
+      2019,
+      2022,
+      2025
+    ],
+    "marks": 5,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "India's regional physical divisions, Monsoon climate, Soil conservation, Crop geography, and Industrial localization are compulsory 5-mark choices.",
+    "trendNoteBn": "ভারতের অধ্যায় থেকে ধান/গম/চা চাষের অনুকূল পরিবেশ, মৌসুমি বায়ুর প্রভাব ও শিল্প গড়ে ওঠার কারণ প্রতি বছর আসে।",
+    "keywords": [
+      "india",
+      "rice",
+      "wheat",
+      "monsoon",
+      "industry",
+      "iron steel",
+      "ভারত",
+      "ধান",
+      "মৌসুমি",
+      "শিল্প"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2025"
+    ]
+  },
+  {
+    "id": "ben-prose-01",
+    "subject": "Bengali",
+    "chapter": "জ্ঞানচক্ষু (আশাপূর্ণা দেবী)",
+    "chapterBn": "জ্ঞানচক্ষু (আশাপূর্ণা দেবী)",
+    "questionEn": "Explain the significance of the title 'Gyanchakshu' (জ্ঞানচক্ষু) and why Tapan felt that the day of reading his published story was the saddest day of his life.",
+    "questionBn": "'পৃথিবীতে এমন অলৌকিক ঘটনাও ঘটে?' — তপনের এমন মনে হওয়ার কারণ কী? 'আজ যেন তার জীবনের সবচেয়ে দুঃখের দিন' — তপনের এই উপলব্ধির কারণ ও 'জ্ঞানচক্ষু' নামকরণের সার্থকতা বিচার করো।",
+    "examYears": [
+      2017,
+      2020,
+      2023,
+      2025
+    ],
+    "marks": 5,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "Ashapurna Devi's Gyanchakshu character study of Tapan and title significance appear repeatedly in Bengali 3 and 5 mark questions.",
+    "trendNoteBn": "আশাপূর্ণা দেবীর 'জ্ঞানচক্ষু' গল্প থেকে তপনের মানসিক দ্বন্দ্ব ও নামকরণের সার্থকতা প্রায়শই ৩ ও ৫ নম্বরের প্রশ্নে আসে।",
+    "keywords": [
+      "gyanchakshu",
+      "tapan",
+      "bengali",
+      "ashapurna",
+      "জ্ঞানচক্ষু",
+      "তপন",
+      "আশাপূর্ণা দেবী",
+      "বাংলা"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2024–25"
+    ]
+  },
+  {
+    "id": "ben-prose-02",
+    "subject": "Bengali",
+    "chapter": "বহুরূপী ও পথের দাবী",
+    "chapterBn": "বহুরূপী ও পথের দাবী",
+    "questionEn": "Analyze the character of Harida in 'Bohurupi' or Sabyasachi (Girish Mahapatra) in 'Pather Dabi'.",
+    "questionBn": "'হরিদার জীবনের সত্যিই একটা নাটকীয় বৈচিত্র্য আছে' — 'বহুরূপী' গল্প অবলম্বনে হরিদার চরিত্র আলোচনা করো। অথবা 'পথের দাবী' গদ্যাংশে গিরীশ মহাপাত্রের ছদ্মবেশ ও সব্যসাচীর চরিত্র বিশ্লেষণ করো।",
+    "examYears": [
+      2018,
+      2021,
+      2024,
+      2026
+    ],
+    "marks": 5,
+    "importanceLevel": "Repeated Trend",
+    "trendNoteEn": "Character analysis of Harida (Bohurupi) and Apurba/Girish Mahapatra (Pather Dabi) alternate in Section 3-5 marks.",
+    "trendNoteBn": "'বহুরূপী' গল্পে হরিদার জীবনবোধ এবং 'পথের দাবী'র অপূর্ব ও গিরীশ মহাপাত্র চরিত্র অত্যন্ত গুরুত্বপূর্ণ।",
+    "keywords": [
+      "bohurupi",
+      "harida",
+      "pather dabi",
+      "girish",
+      "বহুরূপী",
+      "হরিদা",
+      "পথের দাবী",
+      "গিরীশ মহাপাত্র"
+    ],
+    "testPaperRefs": [
+      "ABTA Madhyamik Test Paper 2024–25",
+      "WBTA Test Paper 2024"
+    ]
+  },
+  {
+    "id": "ben-poem-01",
+    "subject": "Bengali",
+    "chapter": "আফ্রিকা, অভিষেক ও প্রলয়োল্লাস",
+    "chapterBn": "আফ্রিকা, অভিষেক ও প্রলয়োল্লাস",
+    "questionEn": "Explain Tagore's anti-imperialist message in 'Africa' or Michael Madhusudan Dutt's characterization of Indrajit in 'Abhishek'.",
+    "questionBn": "'হায় ছায়াবৃতা...' — 'আফ্রিকা' কবিতায় রবীন্দ্রনাথ কীভাবে সাম্রাজ্যবাদী শাসনের বিরুদ্ধে প্রতিবাদ জানিয়েছেন? অথবা 'অভিষেক' কবিতায় ইন্দ্রজিতের দেশপ্রেম ও বীরত্বের পরিচয় দাও।",
+    "examYears": [
+      2017,
+      2019,
+      2022,
+      2025
+    ],
+    "marks": 5,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "Poetry 5-mark questions regularly focus on 'Africa' (Tagore), 'Abhishek' (Dutt), and 'Aay Aaro Bendhe Bendhe Thaki'.",
+    "trendNoteBn": "কবিতা অংশ থেকে 'আফ্রিকা', 'অভিষেক' ও 'আয় আরো বেঁধে বেঁধে থাকি' কবিতার মূলভাব ও তাৎপর্য ঘনঘন আসে।",
+    "keywords": [
+      "africa",
+      "abhishek",
+      "proloyollas",
+      "tagore",
+      "আফ্রিকা",
+      "অভিষেক",
+      "প্রলয়োল্লাস",
+      "রবীন্দ্রনাথ"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2024–25"
+    ]
+  },
+  {
+    "id": "ben-koni-01",
+    "subject": "Bengali",
+    "chapter": "কোনি (মতি নন্দী)",
+    "chapterBn": "কোনি (মতি নন্দী)",
+    "questionEn": "'Fight, Koni, fight!' — Trace Kshitish Sinha's mentorship and Koni's struggle from poverty to winning the national swimming championship.",
+    "questionBn": "'ফাইট কোনি, ফাইট' — ক্ষিতীশ সিংহের প্রশিক্ষণ ও দারিদ্র্যের বিরুদ্ধে সংগ্রাম করে কোনির জাতীয় চ্যাম্পিয়ন হয়ে ওঠার কাহিনি আলোচনা করো।",
+    "examYears": [
+      2016,
+      2018,
+      2022,
+      2024,
+      2026
+    ],
+    "marks": 5,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "Koni carries two compulsory 5-mark questions (answer 2 out of 3) every year, centering on Kshitish, Koni, and 'Juddho'.",
+    "trendNoteBn": "সহায়ক পাঠ 'কোনি' উপন্যাস থেকে প্রতি বছর দুটি ৫ নম্বরের প্রশ্ন লিখতে হয়—ক্ষিতীশ সিংহ ও কোনির চরিত্র সবচেয়ে বেশি আসে।",
+    "keywords": [
+      "koni",
+      "kshitish",
+      "fight",
+      "motinandi",
+      "কোনি",
+      "ক্ষিতীশ",
+      "ফাইট কোনি"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2025"
+    ]
+  },
+  {
+    "id": "ben-gram-01",
+    "subject": "Bengali",
+    "chapter": "বাংলা ব্যাকরণ ও প্রবন্ধ রচনা",
+    "chapterBn": "বাংলা ব্যাকরণ ও প্রবন্ধ রচনা",
+    "questionEn": "Identify Karaka-Bibhakti, Samas (Dwigu, Bahubrihi, Tatpurush), Bakya Paribartan, and essay topics (Science in Daily Life, Environment Conservation, Bangla Bhashay Biggan).",
+    "questionBn": "কারক ও অকারক সম্পর্ক নির্ণয়, সমাস (দ্বিগু, বহুব্রীহি, কর্মধারয়), বাচ্য পরিবর্তন এবং প্রবন্ধ রচনা (দৈনন্দিন জীবনে বিজ্ঞান, পরিবেশ দূষণ ও তার প্রতিকার, বাংলার উৎসব)।",
+    "examYears": [
+      2017,
+      2019,
+      2023,
+      2025
+    ],
+    "marks": 10,
+    "importanceLevel": "Concept Builder",
+    "trendNoteEn": "Bengali Grammar (16 marks) and Essay/Report/Dialogue (15 marks) reward exact rule clarity and structured examples.",
+    "trendNoteBn": "কারক-সমাস-বাচ্য (১৬ নম্বর) এবং প্রবন্ধ ও প্রতিবেদন/সংলাপ রচনা (১৫ নম্বর) নম্বর তোলার সবচেয়ে নির্ভরযোগ্য জায়গা।",
+    "keywords": [
+      "grammar",
+      "karak",
+      "samas",
+      "bachyo",
+      "essay",
+      "ব্যাকরণ",
+      "কারক",
+      "সমাস",
+      "বাচ্য",
+      "প্রবন্ধ"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2025 (Model Set)",
+      "WBTA Madhyamik Test Paper 2024–25"
+    ]
+  },
+  {
+    "id": "eng-prose-01",
+    "subject": "English",
+    "chapter": "Father's Help & The Passing Away of Bapu",
+    "chapterBn": "Father's Help ও The Passing Away of Bapu",
+    "questionEn": "How did Swami's father deal with Swami's excuse about Samuel? Why did Gandhiji's death leave the narrator feeling unprotected?",
+    "questionBn": "স্বামীনাথনের বাবা কীভাবে স্যামুয়েল সম্পর্কে স্বামীর অজুহাতের মোকাবিলা করেছিলেন? গান্ধীজির প্রয়াণে লেখিকার কেন মনে হয়েছিল তিনি সুরক্ষাহীন?",
+    "examYears": [
+      2017,
+      2020,
+      2023,
+      2025
+    ],
+    "marks": 2,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "Seen prose questions (12 marks) frequently test character reactions in Father's Help, Bapu, and Our Runaway Kite.",
+    "trendNoteBn": "ইংরেজি Seen অংশে Father's Help, Bapu এবং Our Runaway Kite থেকে ২ নম্বরের প্রশ্ন নিয়মিত আসে।",
+    "keywords": [
+      "english",
+      "father's help",
+      "swami",
+      "samuel",
+      "bapu",
+      "runaway kite",
+      "ইংরেজি"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2025"
+    ]
+  },
+  {
+    "id": "eng-poem-01",
+    "subject": "English",
+    "chapter": "Fable, My Own True Family & Sea Fever",
+    "chapterBn": "Fable, My Own True Family ও Sea Fever",
+    "questionEn": "What is the central message of 'Fable' (Mountain and Squirrel) and 'My Own True Family' (humanity's bond with oak trees)?",
+    "questionBn": "'Fable' কবিতায় পর্বত ও কাঠবিড়ালির মাধ্যমে কী বার্তা দেওয়া হয়েছে এবং 'My Own True Family' কবিতায় প্রকৃতির সাথে মানুষের সম্পর্ক কী?",
+    "examYears": [
+      2018,
+      2021,
+      2024,
+      2026
+    ],
+    "marks": 2,
+    "importanceLevel": "Repeated Trend",
+    "trendNoteEn": "Poem comprehension (8 marks) emphasizes theme, symbolism (oak trees, sea life), and cause-effect short answers.",
+    "trendNoteBn": "ইংরেজি কবিতা অংশে মূলত 'Fable', 'My Own True Family' ও 'Sea Fever' থেকে থিমভিত্তিক ২ নম্বরের প্রশ্ন আসে।",
+    "keywords": [
+      "fable",
+      "squirrel",
+      "oak",
+      "sea fever",
+      "snail",
+      "poem",
+      "english"
+    ],
+    "testPaperRefs": [
+      "ABTA Madhyamik Test Paper 2024–25",
+      "WBTA Madhyamik Test Paper 2024–25"
+    ]
+  },
+  {
+    "id": "eng-gram-01",
+    "subject": "English",
+    "chapter": "Grammar, Phrasal Verbs & Writing Skills",
+    "chapterBn": "Grammar, Phrasal Verbs ও Writing Skills",
+    "questionEn": "Practice high-frequency WBBSE Grammar transformations (Voice Change, Narration, Joining, Splitting), Phrasal Verbs (put out, give up, look after, call off), and Writing Skills (Newspaper Report, Process Writing, Editorial Letter).",
+    "questionBn": "মাধ্যমিক ইংরেজি গ্রামারের Voice, Narration, Phrasal Verbs এবং Writing Skills (Newspaper Report, Processing, Letter Writing) অনুশীলন।",
+    "examYears": [
+      2016,
+      2019,
+      2022,
+      2024,
+      2026
+    ],
+    "marks": 10,
+    "importanceLevel": "High Probability",
+    "trendNoteEn": "Section B Grammar (20 marks) + Section C Writing (30 marks) account for 50% of WBBSE English score; Process/Report/Letter rotate reliably.",
+    "trendNoteBn": "মাধ্যমিক ইংরেজিতে Grammar (২০ নম্বর) এবং Writing Skill (৩০ নম্বর) মিলিয়ে মোট ৫০ নম্বর থাকে।",
+    "keywords": [
+      "grammar",
+      "voice",
+      "narration",
+      "phrasal verbs",
+      "report",
+      "letter",
+      "writing",
+      "process"
+    ],
+    "testPaperRefs": [
+      "ABTA Test Paper 2024–25 (Multiple School Sets)",
+      "WBTA Madhyamik Test Paper 2025"
+    ]
+  }
+]

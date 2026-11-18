@@ -1,0 +1,183 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Hardened Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedOwner(userId) {
+      return isSignedIn()
+        && request.auth.uid == userId
+        && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidLang(lang) {
+      return lang is string && lang.size() == 2 && (lang == 'bn' || lang == 'en');
+    }
+
+    function isValidSubject(subject) {
+      return subject is string
+        && subject.size() >= 2
+        && subject.size() <= 40
+        && subject in [
+          'All Subjects',
+          'Physical Science',
+          'Life Science',
+          'Mathematics',
+          'History',
+          'Geography',
+          'Bengali',
+          'English'
+        ];
+    }
+
+    // 3. Entity Validation Blueprints
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'displayName', 'email', 'preferredLang', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'email', 'preferredLang', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.uid == userId
+        && data.uid == request.auth.uid
+        && data.displayName is string
+        && data.displayName.size() >= 1
+        && data.displayName.size() <= 120
+        && data.email is string
+        && data.email.size() >= 3
+        && data.email.size() <= 200
+        && isValidLang(data.preferredLang)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidStudySession(data, userId, sessionId) {
+      return data.keys().hasAll(['id', 'userId', 'title', 'subject', 'language', 'messageCount', 'hasAttachment', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'userId', 'title', 'subject', 'language', 'messageCount', 'hasAttachment', 'attachmentName', 'attachmentSummary', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && data.id == sessionId
+        && isValidId(data.userId)
+        && data.userId == userId
+        && data.userId == request.auth.uid
+        && data.title is string
+        && data.title.size() >= 1
+        && data.title.size() <= 200
+        && isValidSubject(data.subject)
+        && isValidLang(data.language)
+        && data.messageCount is int
+        && data.messageCount >= 0
+        && data.messageCount <= 5000
+        && data.hasAttachment is bool
+        && (!('attachmentName' in data) || (data.attachmentName is string && data.attachmentName.size() <= 180))
+        && (!('attachmentSummary' in data) || (data.attachmentSummary is string && data.attachmentSummary.size() <= 2000))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidChatMessage(data, userId, sessionId, messageId) {
+      return data.keys().hasAll(['id', 'userId', 'sessionId', 'role', 'text', 'language', 'subject', 'mode', 'createdAt'])
+        && data.keys().hasOnly(['id', 'userId', 'sessionId', 'role', 'text', 'language', 'subject', 'mode', 'attachmentName', 'attachmentMimeType', 'problemSolve', 'pyqItems', 'youtubeVideos', 'groundingLinks', 'createdAt'])
+        && isValidId(data.id)
+        && data.id == messageId
+        && isValidId(data.userId)
+        && data.userId == userId
+        && data.userId == request.auth.uid
+        && isValidId(data.sessionId)
+        && data.sessionId == sessionId
+        && data.role is string
+        && data.role.size() <= 24
+        && (data.role == 'user' || data.role == 'assistant' || data.role == 'voice_transcript')
+        && data.text is string
+        && data.text.size() >= 1
+        && data.text.size() <= 40000
+        && isValidLang(data.language)
+        && data.subject is string
+        && data.subject.size() >= 1
+        && data.subject.size() <= 60
+        && data.mode is string
+        && data.mode.size() <= 20
+        && (data.mode == 'pyq' || data.mode == 'concept' || data.mode == 'problem_solve' || data.mode == 'general' || data.mode == 'voice')
+        && (!('attachmentName' in data) || (data.attachmentName is string && data.attachmentName.size() >= 1 && data.attachmentName.size() <= 180))
+        && (!('attachmentMimeType' in data) || (data.attachmentMimeType is string && data.attachmentMimeType.size() >= 3 && data.attachmentMimeType.size() <= 80))
+        && (!('problemSolve' in data) || (data.problemSolve is map && data.problemSolve.keys().size() <= 22))
+        && (!('pyqItems' in data) || (data.pyqItems is list && data.pyqItems.size() <= 15 && (data.pyqItems.size() == 0 || data.pyqItems[0] is map)))
+        && (!('youtubeVideos' in data) || (data.youtubeVideos is list && data.youtubeVideos.size() <= 2 && (data.youtubeVideos.size() == 0 || data.youtubeVideos[0] is map)))
+        && (!('groundingLinks' in data) || (data.groundingLinks is list && data.groundingLinks.size() <= 10 && (data.groundingLinks.size() == 0 || data.groundingLinks[0] is map)))
+        && data.createdAt is timestamp;
+    }
+
+    // 4. Collection Rules
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isVerifiedOwner(userId);
+      allow list: if false;
+      allow create: if isValidId(userId)
+        && isVerifiedOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isVerifiedOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'preferredLang', 'updatedAt']);
+      allow delete: if false;
+
+      match /sessions/{sessionId} {
+        allow get: if isValidId(userId) && isValidId(sessionId) && isVerifiedOwner(userId);
+        allow list: if isVerifiedOwner(userId) && resource.data.userId == request.auth.uid;
+        allow create: if isValidId(userId)
+          && isValidId(sessionId)
+          && isVerifiedOwner(userId)
+          && isValidStudySession(incoming(), userId, sessionId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId)
+          && isValidId(sessionId)
+          && isVerifiedOwner(userId)
+          && isValidStudySession(incoming(), userId, sessionId)
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['title', 'subject', 'language', 'messageCount', 'updatedAt']) ||
+            incoming().diff(existing()).affectedKeys().hasOnly(['hasAttachment', 'attachmentName', 'attachmentSummary', 'updatedAt']) ||
+            incoming().diff(existing()).affectedKeys().hasOnly(['title', 'subject', 'language', 'messageCount', 'hasAttachment', 'attachmentName', 'attachmentSummary', 'updatedAt'])
+          );
+        allow delete: if isValidId(userId) && isValidId(sessionId) && isVerifiedOwner(userId);
+
+        match /messages/{messageId} {
+          allow get: if isValidId(userId) && isValidId(sessionId) && isValidId(messageId) && isVerifiedOwner(userId);
+          allow list: if isVerifiedOwner(userId) && resource.data.userId == request.auth.uid;
+          allow create: if isValidId(userId)
+            && isValidId(sessionId)
+            && isValidId(messageId)
+            && isVerifiedOwner(userId)
+            && isValidChatMessage(incoming(), userId, sessionId, messageId)
+            && incoming().createdAt == request.time
+            && existsAfter(/databases/$(database)/documents/users/$(userId)/sessions/$(sessionId));
+          allow update: if false;
+          allow delete: if isValidId(userId) && isValidId(sessionId) && isValidId(messageId) && isVerifiedOwner(userId);
+        }
+      }
+    }
+  }
+}

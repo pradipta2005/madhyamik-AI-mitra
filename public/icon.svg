@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="tile" x1="6" y1="4" x2="42" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1B4735" />
+      <stop offset="55%" stop-color="#143326" />
+      <stop offset="100%" stop-color="#0B2017" />
+    </linearGradient>
+    <linearGradient id="star" x1="20" y1="8" x2="28" y2="19" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FEF08A" />
+      <stop offset="55%" stop-color="#FBBF24" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="44" height="44" rx="12" fill="url(#tile)" />
+  <rect x="2.75" y="2.75" width="42.5" height="42.5" rx="11.25" stroke="rgba(247,246,242,0.16)" stroke-width="1" />
+  <path d="M10.5 35.5Q17.2 33.4 24 36.6Q30.8 33.4 37.5 35.5" stroke="rgba(247,246,242,0.56)" stroke-width="1.9" stroke-linecap="round" />
+  <path d="M24 36.2V21.5" stroke="#A7F3D0" stroke-width="1.85" stroke-linecap="round" />
+  <circle cx="24" cy="21" r="1.25" fill="#A7F3D0" />
+  <path d="M11.5 34.2V19.2L24 29.2L36.5 19.2V34.2" stroke="#F7F6F2" stroke-width="2.85" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M24 7.8Q24.85 12.65 29.7 13.5Q24.85 14.35 24 19.2Q23.15 14.35 18.3 13.5Q23.15 12.65 24 7.8Z" fill="url(#star)" />
+</svg>

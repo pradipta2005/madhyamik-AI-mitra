@@ -1,0 +1,6 @@
+{
+  "name": "Madhyamik AI Mitra",
+  "description": "Autonomous WBBSE Class 10 (Madhyamik) exam research assistant with 10-year PYQ trend analysis, bilingual Bengali/English explanations, YouTube grounding, and Live Voice Viva Prep.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,182 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated student profile stored under their own UID.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "preferredLang": {
+          "type": "string",
+          "enum": ["bn", "en"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "displayName", "email", "preferredLang", "createdAt", "updatedAt"]
+    },
+    "StudySession": {
+      "title": "StudySession",
+      "description": "A persistent WBBSE Madhyamik study conversation session belonging to a student.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "subject": {
+          "type": "string",
+          "enum": [
+            "All Subjects",
+            "Physical Science",
+            "Life Science",
+            "Mathematics",
+            "History",
+            "Geography",
+            "Bengali",
+            "English"
+          ]
+        },
+        "language": {
+          "type": "string",
+          "enum": ["bn", "en"]
+        },
+        "messageCount": {
+          "type": "integer"
+        },
+        "hasAttachment": {
+          "type": "boolean"
+        },
+        "attachmentName": {
+          "type": "string",
+          "maxLength": 180
+        },
+        "attachmentSummary": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "userId", "title", "subject", "language", "messageCount", "hasAttachment", "createdAt", "updatedAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Individual student query, research response, or voice transcript inside a study session.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "sessionId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "maxLength": 128
+        },
+        "role": {
+          "type": "string",
+          "enum": ["user", "assistant", "voice_transcript"]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40000
+        },
+        "language": {
+          "type": "string",
+          "enum": ["bn", "en"]
+        },
+        "subject": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["pyq", "concept", "problem_solve", "general", "voice"]
+        },
+        "attachmentName": {
+          "type": "string",
+          "maxLength": 180
+        },
+        "attachmentMimeType": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "problemSolve": {
+          "type": "object",
+          "description": "Structured section-by-section Blackboard Teacher walkthrough for Mathematics & Physical Science with subject guard, board history, spoken narration, and simplification level."
+        },
+        "pyqItems": {
+          "type": "array"
+        },
+        "youtubeVideos": {
+          "type": "array"
+        },
+        "groundingLinks": {
+          "type": "array"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "userId", "sessionId", "role", "text", "language", "subject", "mode", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private student profile isolated to the authenticated owner."
+    },
+    "/users/{userId}/sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/StudySession" },
+      "description": "Student study chat sessions."
+    },
+    "/users/{userId}/sessions/{sessionId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "Ordered messages and live voice transcripts inside a study session."
+    }
+  }
+}

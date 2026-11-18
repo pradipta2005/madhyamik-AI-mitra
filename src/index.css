@@ -1,0 +1,152 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Noto Sans Bengali", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Noto Sans Bengali", ui-sans-serif, system-ui, sans-serif;
+  --font-serif-accent: "Fraunces", "Noto Sans Bengali", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  html,
+  body {
+    font-family: var(--font-sans);
+    background-color: #f7f6f2;
+    color: #141517;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+  }
+}
+
+.font-serif-accent {
+  font-family: var(--font-serif-accent);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Subtle architectural graph paper texture for editorial surfaces */
+.paper-grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(20, 21, 23, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(20, 21, 23, 0.035) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+/* Smooth markdown prose readability for bilingual English & Bengali */
+.study-prose {
+  line-height: 1.74;
+  color: #27292d;
+}
+
+.study-prose h1,
+.study-prose h2,
+.study-prose h3 {
+  font-family: var(--font-display);
+  color: #141517;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  margin-top: 1.2em;
+  margin-bottom: 0.45em;
+}
+
+.study-prose h2 {
+  font-size: 1.075rem;
+}
+
+.study-prose h3 {
+  font-size: 0.975rem;
+}
+
+.study-prose p {
+  margin-bottom: 0.75em;
+}
+
+.study-prose p:last-child {
+  margin-bottom: 0;
+}
+
+.study-prose ul,
+.study-prose ol {
+  margin-top: 0.35em;
+  margin-bottom: 0.85em;
+  padding-left: 1.35em;
+}
+
+.study-prose ul {
+  list-style-type: disc;
+}
+
+.study-prose ol {
+  list-style-type: decimal;
+}
+
+.study-prose li {
+  margin-bottom: 0.32em;
+}
+
+.study-prose strong {
+  color: #141517;
+  font-weight: 600;
+}
+
+.study-prose code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background-color: #efede6;
+  color: #141517;
+  padding: 0.12rem 0.38rem;
+  border-radius: 0.25rem;
+}
+
+.study-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.95em 0;
+  font-size: 0.875rem;
+}
+
+.study-prose th,
+.study-prose td {
+  border: 1px solid #e4e2dc;
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+}
+
+.study-prose th {
+  background-color: #f3f1ec;
+  font-weight: 600;
+  color: #141517;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
