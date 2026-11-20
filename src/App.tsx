@@ -23,11 +23,16 @@ import type {
   AppUser,
   BlackboardSectionSnapshot,
   ChatMessage,
+  GroundingLink,
   LanguageCode,
   LiveTranscriptTurn,
+  MessageMode,
+  ProblemSolveData,
   StudySession,
+  SuggestedPyqItem,
   UploadedPaperContext,
   WbbseSubject,
+  YouTubeRecommendation,
 } from './types';
 import {
   SUBJECT_META,
@@ -38,6 +43,7 @@ import {
   isProblemSolveSubject,
   isSupportedDocumentType,
   sanitizeMessageForStorage,
+  stripInternalFences,
 } from './utils/wbbseResearch';
 import { Sidebar } from './components/Sidebar';
 import { SubjectBar } from './components/SubjectBar';
@@ -380,9 +386,10 @@ export default function App() {
     return () => unsub();
   }, [authReady, user, activeSessionId, sessions]);
 
+  const lastMsgTextLength = activeMessages[activeMessages.length - 1]?.text?.length ?? 0;
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [activeMessages.length, isResearching]);
+  }, [activeMessages.length, isResearching, lastMsgTextLength]);
 
   const openSignInGate = useCallback(
     (
@@ -690,7 +697,24 @@ export default function App() {
         setAttachment(null);
       }
 
+      // Create immediate assistant placeholder bubble with streaming cursor
+      const assistantMsgId = makeId('msg');
+      const tempStreamingMsg: ChatMessage = {
+        id: assistantMsgId,
+        sessionId,
+        userId: activeUser.uid,
+        role: 'assistant',
+        text: '',
+        language: detectedLang,
+        subject: chosenSubject,
+        mode: effectiveSolveMode ? 'problem_solve' : 'general',
+        createdAt: Date.now(),
+        isStreaming: true,
+      };
+
+      setFirestoreMessages((prev) => [...prev, tempStreamingMsg]);
       setIsResearching(true);
+
       try {
         const historyPayload = [...baseMessages, userMsg]
           .slice(-8)
@@ -701,7 +725,10 @@ export default function App() {
 
         const res = await fetch('/api/research', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'text/event-stream, application/json',
+          },
           body: JSON.stringify({
             message: queryText,
             subject: chosenSubject,
@@ -722,38 +749,136 @@ export default function App() {
           }),
         });
 
-        const data = await res.json();
         if (!res.ok) {
-          throw new Error(data.error || 'Research service returned an error.');
+          let errMessage = 'Research service returned an error.';
+          try {
+            const errData = await res.json();
+            if (errData?.error) errMessage = errData.error;
+          } catch {
+            // fallback
+          }
+          throw new Error(errMessage);
         }
 
-        const assistantMsg: ChatMessage = {
-          id: makeId('msg'),
-          sessionId,
-          userId: activeUser.uid,
-          role: 'assistant',
-          text: data.text,
-          language: data.language || detectedLang,
-          subject: chosenSubject,
-          mode: data.mode || 'general',
-          problemSolve: data.problemSolve,
-          pyqItems: data.pyqItems,
-          youtubeVideos: data.youtubeVideos,
-          groundingLinks: data.groundingLinks,
-          createdAt: Date.now(),
-        };
+        const contentType = res.headers.get('content-type') || '';
+        let finalAssistantMsg: ChatMessage;
 
+        if (contentType.includes('text/event-stream') && res.body) {
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder('utf-8');
+          let buffer = '';
+          let rawAccumulatedText = '';
+          interface StreamDonePayload {
+            text?: string;
+            language?: LanguageCode;
+            mode?: MessageMode;
+            problemSolve?: ProblemSolveData;
+            pyqItems?: SuggestedPyqItem[];
+            youtubeVideos?: YouTubeRecommendation[];
+            groundingLinks?: GroundingLink[];
+          }
+          let donePayload: StreamDonePayload | null = null;
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+
+            const parts = buffer.split('\n\n');
+            buffer = parts.pop() ?? '';
+
+            for (const part of parts) {
+              const trimmed = part.trim();
+              if (!trimmed.startsWith('data:')) continue;
+              const jsonStr = trimmed.replace(/^data:\s*/, '');
+              if (!jsonStr) continue;
+
+              try {
+                const event = JSON.parse(jsonStr);
+                if (event.type === 'chunk' && typeof event.text === 'string') {
+                  rawAccumulatedText += event.text;
+                  const displayProse = stripInternalFences(rawAccumulatedText);
+                  setFirestoreMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === assistantMsgId ? { ...m, text: displayProse } : m
+                    )
+                  );
+                } else if (event.type === 'done') {
+                  donePayload = event as StreamDonePayload;
+                } else if (event.type === 'error') {
+                  throw new Error(event.error || 'Streaming error occurred.');
+                }
+              } catch (parseErr) {
+                if (
+                  parseErr instanceof Error &&
+                  parseErr.message.includes('Streaming error')
+                ) {
+                  throw parseErr;
+                }
+              }
+            }
+          }
+
+          const resolvedText =
+            donePayload?.text || stripInternalFences(rawAccumulatedText) || rawAccumulatedText;
+
+          finalAssistantMsg = {
+            id: assistantMsgId,
+            sessionId,
+            userId: activeUser.uid,
+            role: 'assistant',
+            text: resolvedText,
+            language: donePayload?.language || detectedLang,
+            subject: chosenSubject,
+            mode: donePayload?.mode || (effectiveSolveMode ? 'problem_solve' : 'general'),
+            problemSolve: donePayload?.problemSolve,
+            pyqItems: donePayload?.pyqItems,
+            youtubeVideos: donePayload?.youtubeVideos,
+            groundingLinks: donePayload?.groundingLinks,
+            createdAt: Date.now(),
+            isStreaming: false,
+          };
+        } else {
+          // Standard JSON fallback
+          const data = await res.json();
+          finalAssistantMsg = {
+            id: assistantMsgId,
+            sessionId,
+            userId: activeUser.uid,
+            role: 'assistant',
+            text: data.text,
+            language: data.language || detectedLang,
+            subject: chosenSubject,
+            mode: data.mode || 'general',
+            problemSolve: data.problemSolve,
+            pyqItems: data.pyqItems,
+            youtubeVideos: data.youtubeVideos,
+            groundingLinks: data.groundingLinks,
+            createdAt: Date.now(),
+            isStreaming: false,
+          };
+        }
+
+        // Finalize local state
+        setFirestoreMessages((prev) =>
+          prev.map((m) => (m.id === assistantMsgId ? finalAssistantMsg : m))
+        );
+
+        // Persist final message once streaming finishes
         await persistMessageAndSession(
           activeUser,
           sessionId,
           queryText.slice(0, 80),
-          assistantMsg.language,
+          finalAssistantMsg.language,
           chosenSubject,
-          assistantMsg,
+          finalAssistantMsg,
           false,
           currentCount + 2
         );
       } catch (err) {
+        setFirestoreMessages((prev) =>
+          prev.filter((m) => m.id !== assistantMsgId || Boolean(m.text.trim()))
+        );
         setChatError(
           err instanceof Error
             ? err.message

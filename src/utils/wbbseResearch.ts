@@ -650,6 +650,17 @@ export function stripUndefinedDeep<T>(value: T): T {
   return value;
 }
 
+/**
+ * Strips internal JSON blocks (e.g. ```json:problem_solve, ```json:pyq, ```json:youtube)
+ * whether fully completed or partially streamed, so chat bubbles only display clean prose.
+ */
+export function stripInternalFences(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/```json:(?:problem_solve|pyq|youtube)[\s\S]*?(?:```|$)/gi, '')
+    .trim();
+}
+
 export function sanitizeMessageForStorage(msg: ChatMessage): ChatMessage {
   const sanitized: ChatMessage = {
     ...msg,
@@ -755,7 +766,9 @@ export function sanitizeMessageForStorage(msg: ChatMessage): ChatMessage {
         }))
       : undefined,
   };
-  return stripUndefinedDeep(sanitized);
+  const cleaned = stripUndefinedDeep(sanitized);
+  delete (cleaned as unknown as Record<string, unknown>).isStreaming;
+  return cleaned;
 }
 
 export function formatTeacherSpeechForAudio(

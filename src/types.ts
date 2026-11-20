@@ -123,6 +123,7 @@ export interface ChatMessage {
   youtubeVideos?: YouTubeRecommendation[];
   groundingLinks?: GroundingLink[];
   createdAt: number;
+  isStreaming?: boolean;
 }
 
 export interface UploadedPaperContext {

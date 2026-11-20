@@ -19,6 +19,7 @@ import {
   parseAuthError,
   sanitizeMessageForStorage,
   searchPyqBank,
+  stripInternalFences,
 } from './wbbseResearch.ts';
 
 const pyqBankPath = path.resolve(process.cwd(), 'src/data/wbbse_pyq_bank.json');
@@ -334,6 +335,36 @@ test('parseAuthError formats auth/unauthorized-domain with steps, links, and loc
   const popupBlocked = parseAuthError(new Error('Firebase: Error (auth/popup-blocked).'));
   assert.equal(popupBlocked?.isUnauthorizedDomain, false);
   assert.ok(popupBlocked?.messageEn.includes('popup was blocked'));
+});
+
+test('stripInternalFences cleans completed and streaming unclosed JSON code blocks', () => {
+  const completeSample = 'Let us solve this step.\n```json:problem_solve\n{"topic":"Math"}\n```\nGood luck!';
+  assert.equal(stripInternalFences(completeSample), 'Let us solve this step.\n\nGood luck!');
+
+  const streamingUnclosedSample = 'Here is the explanation.\n```json:problem_solve\n{"sectionNumber": 1, "topic":';
+  assert.equal(stripInternalFences(streamingUnclosedSample), 'Here is the explanation.');
+
+  const normalMarkdown = '### Theorem 48\nState and prove the theorem.\n```python\nprint("code")\n```';
+  assert.ok(stripInternalFences(normalMarkdown).includes('Theorem 48'));
+  assert.ok(stripInternalFences(normalMarkdown).includes('print("code")'));
+});
+
+test('sanitizeMessageForStorage strips isStreaming for strict Firestore compliance', () => {
+  const sanitized = sanitizeMessageForStorage({
+    id: 'msg_stream_1',
+    sessionId: 'sess_1',
+    userId: 'u1',
+    role: 'assistant',
+    text: 'Streaming test text',
+    language: 'en',
+    subject: 'All Subjects',
+    mode: 'general',
+    createdAt: Date.now(),
+    isStreaming: true,
+  });
+
+  assert.equal('isStreaming' in sanitized, false);
+  assert.equal((sanitized as unknown as Record<string, unknown>).isStreaming, undefined);
 });
 
 

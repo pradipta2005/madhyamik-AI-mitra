@@ -90,9 +90,24 @@ export function ChatMessageBubble({
         </div>
 
         <div className="bg-white border border-[#E4E2DC] rounded-2xl p-5 sm:p-6 shadow-[0_6px_26px_-18px_rgba(20,21,23,0.14)] space-y-5">
-          <div className="study-prose text-[15px]">
-            <Markdown remarkPlugins={[remarkGfm]}>{message.text}</Markdown>
-          </div>
+          {message.isStreaming && !message.text ? (
+            <div className="flex items-center gap-2 text-sm text-[#0F4C5C] py-1 font-medium">
+              <span className="w-2 h-2 rounded-full bg-[#0F4C5C] animate-ping" />
+              <span>
+                {lang === 'bn' ? 'মিত্র উত্তর তৈরি করছে...' : 'Mitra is researching...'}
+              </span>
+            </div>
+          ) : (
+            <div className="study-prose text-[15px]">
+              <Markdown remarkPlugins={[remarkGfm]}>{message.text}</Markdown>
+              {message.isStreaming && (
+                <span
+                  className="inline-block w-1.5 h-4 ml-1 bg-[#0F4C5C] animate-pulse align-middle rounded-xs"
+                  aria-hidden="true"
+                />
+              )}
+            </div>
+          )}
 
           {message.problemSolve && (
             <ProblemSolveCard

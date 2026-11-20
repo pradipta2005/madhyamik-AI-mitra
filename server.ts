@@ -1,4 +1,10 @@
 import 'dotenv/config';
+import dns from 'dns';
+try {
+  dns.setDefaultResultOrder('ipv4first');
+} catch {
+  // Ignore in environments where not supported
+}
 import express from 'express';
 import http from 'http';
 import fs from 'fs';
@@ -265,34 +271,77 @@ function formatGeminiError(error: unknown): { status: number; message: string } 
   return { status: 500, message: raw || 'Research request failed.' };
 }
 
-async function generateResearchWithFallback(
+function shouldEnableGoogleSearch(query: string): boolean {
+  const q = query.toLowerCase();
+  return (
+    q.includes('news') ||
+    q.includes('current') ||
+    q.includes('notice') ||
+    q.includes('routine') ||
+    q.includes('official') ||
+    q.includes('update') ||
+    q.includes('date') ||
+    q.includes('website') ||
+    q.includes('ঘোষণা') ||
+    q.includes('বিজ্ঞপ্তি') ||
+    q.includes('খবর') ||
+    q.includes('রুটিন')
+  );
+}
+
+interface ResearchStreamResult {
+  stream: AsyncIterable<{
+    text?: string;
+    candidates?: Array<{
+      groundingMetadata?: {
+        groundingChunks?: Array<{
+          web?: { uri?: string; title?: string };
+        }>;
+      };
+    }>;
+  }>;
+}
+
+async function generateResearchStreamWithFallback(
   ai: GoogleGenAI,
   contents: Array<{
     role: 'user' | 'model';
     parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>;
   }>,
   systemInstruction: string,
-  deepMode = false
-): Promise<GenerateContentResponse> {
-  const primaryThinking = deepMode ? ThinkingLevel.HIGH : ThinkingLevel.MEDIUM;
+  enableSearch = false
+): Promise<ResearchStreamResult> {
+  const tools = enableSearch ? [{ googleSearch: {} }] : undefined;
+
+  // 1. Primary fast stream: gemini-3.1-flash-lite (ultra-low TTFT ~1.5s - 2.5s)
   try {
-    return await ai.models.generateContent({
-      model: 'gemini-4-hydrogen',
+    const stream = await ai.models.generateContentStream({
+      model: 'gemini-3.1-flash-lite',
       contents,
       config: {
         systemInstruction,
-        tools: [{ googleSearch: {} }],
-        thinkingConfig: { thinkingLevel: primaryThinking },
+        tools,
       },
     });
-  } catch (err) {
-    if (!isQuotaOrRateError(err)) {
-      throw err;
-    }
-    console.warn('gemini-4-hydrogen with googleSearch hit 429; retrying with LOW thinking.');
-    await new Promise((r) => setTimeout(r, 800));
+    return { stream };
+  } catch (err1) {
+    console.warn('gemini-3.1-flash-lite stream error; attempting gemini-3.8-flash:', err1);
+    // 2. Fallback: gemini-3.8-flash with LOW thinking
     try {
-      return await ai.models.generateContent({
+      const stream = await ai.models.generateContentStream({
+        model: 'gemini-3.8-flash',
+        contents,
+        config: {
+          systemInstruction,
+          tools,
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+        },
+      });
+      return { stream };
+    } catch (err2) {
+      console.warn('gemini-3.8-flash stream error; falling back to gemini-4-hydrogen:', err2);
+      // 3. Fallback: gemini-4-hydrogen with LOW thinking
+      const stream = await ai.models.generateContentStream({
         model: 'gemini-4-hydrogen',
         contents,
         config: {
@@ -300,17 +349,58 @@ async function generateResearchWithFallback(
           thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
         },
       });
+      return { stream };
+    }
+  }
+}
+
+async function generateResearchWithFallback(
+  ai: GoogleGenAI,
+  contents: Array<{
+    role: 'user' | 'model';
+    parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>;
+  }>,
+  systemInstruction: string,
+  enableSearch = false
+): Promise<GenerateContentResponse> {
+  const tools = enableSearch ? [{ googleSearch: {} }] : undefined;
+  try {
+    return await ai.models.generateContent({
+      model: 'gemini-3.1-flash-lite',
+      contents,
+      config: {
+        systemInstruction,
+        tools,
+      },
+    });
+  } catch (err) {
+    if (!isQuotaOrRateError(err)) {
+      throw err;
+    }
+    console.warn('gemini-3.1-flash-lite hit rate limit; retrying with gemini-3.8-flash.');
+    await new Promise((r) => setTimeout(r, 600));
+    try {
+      return await ai.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents,
+        config: {
+          systemInstruction,
+          tools,
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+        },
+      });
     } catch (err2) {
       if (!isQuotaOrRateError(err2)) {
         throw err2;
       }
-      console.warn('gemini-4-hydrogen hit 429; falling back to gemini-3.1-flash-lite.');
-      await new Promise((r) => setTimeout(r, 800));
+      console.warn('gemini-3.8-flash hit rate limit; falling back to gemini-4-hydrogen.');
+      await new Promise((r) => setTimeout(r, 600));
       return await ai.models.generateContent({
-        model: 'gemini-3.1-flash-lite',
+        model: 'gemini-4-hydrogen',
         contents,
         config: {
           systemInstruction,
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
         },
       });
     }
@@ -331,7 +421,7 @@ async function verifyYouTubeVideoAvailable(
     )}&format=json`;
     const res = await fetch(oembedUrl, {
       method: 'GET',
-      signal: AbortSignal.timeout(4500),
+      signal: AbortSignal.timeout(2500),
       headers: {
         'User-Agent': 'MadhyamikAIMitra/1.0',
       },
@@ -566,11 +656,10 @@ async function resolveVerifiedYouTubeVideos(
         language === 'bn' ? 'Bengali' : 'Bengali or English'
       }: Subject "${subject}", Topic: "${query.slice(0, 220)}". Return ONLY a JSON array of { "title", "channel", "url", "reason" } using real watch URLs from search results.`;
       const ytSearchRes = await ai.models.generateContent({
-        model: 'gemini-4-hydrogen',
+        model: 'gemini-3.1-flash-lite',
         contents: [{ role: 'user', parts: [{ text: searchPrompt }] }],
         config: {
           tools: [{ googleSearch: {} }],
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
         },
       });
       const ytText = ytSearchRes.text ?? '';
@@ -981,13 +1070,166 @@ async function startServer() {
       contents.push({ role: 'user', parts: currentParts });
 
       const ai = getAiClient();
-      const deepMode =
-        intent === 'pyq' || intent === 'problem_solve' || intent === 'concept';
+      const needsSearch = shouldEnableGoogleSearch(message);
+      const wantsStream = req.body.stream !== false;
+
+      if (wantsStream) {
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream; charset=utf-8',
+          'Cache-Control': 'no-cache, no-transform',
+          'Connection': 'keep-alive',
+          'X-Accel-Buffering': 'no',
+        });
+
+        const sendEvent = (payload: Record<string, unknown>) => {
+          res.write(`data: ${JSON.stringify(payload)}\n\n`);
+          if (typeof (res as unknown as { flush?: () => void }).flush === 'function') {
+            (res as unknown as { flush: () => void }).flush();
+          }
+        };
+
+        sendEvent({
+          type: 'start',
+          language,
+          mode: intent === 'problem_solve' ? 'problem_solve' : intent,
+        });
+
+        let fullRawText = '';
+        const groundingLinks: GroundingLink[] = [];
+        const seenUrls = new Set<string>();
+
+        try {
+          const streamResult = await generateResearchStreamWithFallback(
+            ai,
+            contents,
+            systemInstruction,
+            needsSearch
+          );
+
+          for await (const chunk of streamResult.stream) {
+            const chunkText = chunk.text;
+            if (chunkText) {
+              fullRawText += chunkText;
+              sendEvent({
+                type: 'chunk',
+                text: chunkText,
+              });
+            }
+
+            const gChunks = chunk.candidates?.[0]?.groundingMetadata?.groundingChunks;
+            if (Array.isArray(gChunks)) {
+              for (const ch of gChunks) {
+                const uri = ch?.web?.uri;
+                const title = ch?.web?.title;
+                if (uri && title && !seenUrls.has(uri)) {
+                  seenUrls.add(uri);
+                  groundingLinks.push({ title, url: uri });
+                }
+              }
+            }
+          }
+
+          let parsed = parseAssistantResponseBlocks(fullRawText);
+
+          // Defensive formatting recovery if problem_solve mode omitted its structured fence
+          if (intent === 'problem_solve' && allowProblemSolve && !parsed.problemSolve) {
+            try {
+              const repairPrompt = `Convert your response below into the required fenced \`\`\`json:problem_solve ... \`\`\` block for Section ${safeTargetSection} of the ${subject} Blackboard Teacher lesson.\n\nDraft:\n${fullRawText.slice(0, 4000)}`;
+              const repairRes = await ai.models.generateContent({
+                model: 'gemini-3.1-flash-lite',
+                contents: [...contents, { role: 'user', parts: [{ text: repairPrompt }] }],
+                config: {
+                  systemInstruction,
+                },
+              });
+              const repairedText = repairRes.text ?? '';
+              const repairedParsed = parseAssistantResponseBlocks(repairedText);
+              if (repairedParsed.problemSolve) {
+                fullRawText = repairedText;
+                parsed = repairedParsed;
+              }
+            } catch {
+              // Proceed safely without blocking request
+            }
+          }
+
+          // Attach cumulative blackboard history to returned problemSolve section
+          let problemSolve = parsed.problemSolve;
+          if (problemSolve && allowProblemSolve) {
+            problemSolve = {
+              ...problemSolve,
+              subjectGuard: subject as 'Mathematics' | 'Physical Science',
+              boardHistory: safeBoardHistory.length > 0 ? safeBoardHistory : undefined,
+            };
+          } else if (!allowProblemSolve) {
+            problemSolve = undefined;
+          }
+
+          // Fast YouTube candidate verification (up to 2 videos, max 2.5s timeout)
+          const rawYt = extractRawYouTubeCandidatesFromText(fullRawText);
+          const youtubeVideos: YouTubeRecommendation[] = [];
+          if (rawYt.length > 0) {
+            const checked = await Promise.all(
+              rawYt.slice(0, 3).map(verifyYouTubeVideoAvailable)
+            );
+            for (const v of checked) {
+              if (v) youtubeVideos.push(v);
+              if (youtubeVideos.length >= 2) break;
+            }
+          }
+
+          const resolvedMode = problemSolve
+            ? 'problem_solve'
+            : parsed.pyqItems.length > 0
+              ? 'pyq'
+              : youtubeVideos.length > 0
+                ? 'concept'
+                : intent === 'problem_solve' && !allowProblemSolve
+                  ? 'general'
+                  : intent;
+
+          sendEvent({
+            type: 'done',
+            text:
+              parsed.cleanText ||
+              (problemSolve
+                ? problemSolve.subjectMismatch
+                  ? problemSolve.mismatchReason ||
+                    (language === 'bn'
+                      ? `এই প্রশ্নটি ${subject} বিষয়ের নয়।`
+                      : `This question is outside ${subject}.`)
+                  : language === 'bn'
+                    ? `ব্ল্যাকবোর্ডে Section ${problemSolve.sectionNumber || 1} লেখা হলো — মন দিয়ে দেখে বলো বুঝতে পারলে কি না:`
+                    : `Here is Section ${problemSolve.sectionNumber || 1} on the blackboard — let me know if you understood:`
+                : language === 'bn'
+                  ? 'দুঃখিত, এই মুহূর্তে উত্তর তৈরি করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করো।'
+                  : 'Sorry, I could not generate a response right now. Please try again.'),
+            mode: resolvedMode,
+            language,
+            problemSolve,
+            pyqItems: parsed.pyqItems,
+            youtubeVideos: youtubeVideos.slice(0, 2),
+            groundingLinks: groundingLinks.slice(0, 8),
+          });
+          res.end();
+        } catch (streamError) {
+          console.error('Research stream error:', streamError);
+          const formatted = formatGeminiError(streamError);
+          sendEvent({
+            type: 'error',
+            error: formatted.message,
+          });
+          res.end();
+        }
+        return;
+      }
+
+      // Non-streaming fallback
       const response = await generateResearchWithFallback(
         ai,
         contents,
         systemInstruction,
-        deepMode
+        needsSearch
       );
 
       let rawText = response.text ?? '';
@@ -998,11 +1240,10 @@ async function startServer() {
         try {
           const repairPrompt = `Convert your response below into the required fenced \`\`\`json:problem_solve ... \`\`\` block for Section ${safeTargetSection} of the ${subject} Blackboard Teacher lesson.\n\nDraft:\n${rawText.slice(0, 4000)}`;
           const repairRes = await ai.models.generateContent({
-            model: 'gemini-4-hydrogen',
+            model: 'gemini-3.1-flash-lite',
             contents: [...contents, { role: 'user', parts: [{ text: repairPrompt }] }],
             config: {
               systemInstruction,
-              thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
             },
           });
           const repairedText = repairRes.text ?? '';
@@ -1043,16 +1284,18 @@ async function startServer() {
         }
       }
 
-      // Verify every recommended YouTube video is actually available on YouTube (via oEmbed)
-      const youtubeVideos = await resolveVerifiedYouTubeVideos(
-        ai,
-        rawText,
-        groundingLinks,
-        message.trim(),
-        subject,
-        language,
-        intent
-      );
+      // Verify recommended YouTube videos
+      const rawYt = extractRawYouTubeCandidatesFromText(rawText);
+      const youtubeVideos: YouTubeRecommendation[] = [];
+      if (rawYt.length > 0) {
+        const checked = await Promise.all(
+          rawYt.slice(0, 3).map(verifyYouTubeVideoAvailable)
+        );
+        for (const v of checked) {
+          if (v) youtubeVideos.push(v);
+          if (youtubeVideos.length >= 2) break;
+        }
+      }
 
       const resolvedMode = problemSolve
         ? 'problem_solve'
