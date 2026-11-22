@@ -241,7 +241,6 @@ export default function App() {
   const [liveVoiceOpen, setLiveVoiceOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const hasAutoSelectedSessionRef = useRef(false);
   const bannerFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const effectiveSubject: WbbseSubject = lockedSubject ?? 'All Subjects';
@@ -263,47 +262,55 @@ export default function App() {
     [sessions, activeSessionId]
   );
 
-  // Listen to Firebase Auth state (with guest profile restoration fallback)
+  // Listen to Firebase Auth state
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (nextUser) => {
       if (nextUser) {
         setUser(nextUser);
         setAuthReady(true);
+        // Requirement: Logged-in user returning to the website always starts in a clean new chat state
+        setActiveSessionId(makeId('sess'));
+        setLockedSubject(null);
+        setSolveMode(false);
+        setFirestoreMessages([]);
+        setAttachment(null);
+        setChatError(null);
         try {
           await ensureUserProfile(nextUser, micLang);
         } catch (err) {
           console.error('Failed to sync user profile:', err);
         }
       } else {
-        // Restore guest mode if user previously chose guest access
-        const storedGuest =
-          typeof window !== 'undefined' ? localStorage.getItem('mitra_guest_user') : null;
-        if (storedGuest) {
+        // Requirement: If user is not logged in or exited without logging in, redirect to landing page
+        if (typeof window !== 'undefined') {
           try {
-            const guestObj = JSON.parse(storedGuest) as AppUser;
-            setUser(guestObj);
+            localStorage.removeItem('mitra_guest_user');
+            sessionStorage.clear();
           } catch {
-            setUser(null);
+            // ignore
           }
-        } else {
-          setUser(null);
-          hasAutoSelectedSessionRef.current = false;
-          setSessions([]);
-          setFirestoreMessages([]);
         }
+        setUser(null);
+        setSessions([]);
+        setFirestoreMessages([]);
+        setActiveSessionId(makeId('sess'));
+        setLockedSubject(null);
+        setSolveMode(false);
+        setAttachment(null);
+        setChatError(null);
         setAuthReady(true);
       }
     });
     return () => unsub();
   }, []);
 
-  // Subscribe to user sessions (cloud Firestore for signed-in, localStorage for guest)
+  // Subscribe to user sessions (cloud Firestore for signed-in, sessionStorage for guest)
   useEffect(() => {
     if (!authReady || !user) return;
     if (isGuestUser(user)) {
       const stored =
         typeof window !== 'undefined'
-          ? localStorage.getItem(`mitra_guest_sessions_${user.uid}`) || '[]'
+          ? sessionStorage.getItem(`mitra_guest_sessions_${user.uid}`) || '[]'
           : '[]';
       try {
         const parsed = JSON.parse(stored) as StudySession[];
@@ -326,19 +333,7 @@ export default function App() {
     return () => unsub();
   }, [authReady, user]);
 
-  // Auto-select latest session on initial return if user hasn't explicitly clicked new chat
-  useEffect(() => {
-    if (!authReady || !user || sessions.length === 0) return;
-    if (!hasAutoSelectedSessionRef.current) {
-      hasAutoSelectedSessionRef.current = true;
-      const latest = sessions[0];
-      if (latest) {
-        handleSelectSession(latest.id);
-      }
-    }
-  }, [authReady, user, sessions]);
-
-  // Subscribe to messages for active session (cloud Firestore or localStorage)
+  // Subscribe to messages for active session (cloud Firestore or sessionStorage)
   useEffect(() => {
     if (!authReady || !user || !activeSessionId) {
       setFirestoreMessages([]);
@@ -353,7 +348,7 @@ export default function App() {
     if (isGuestUser(user)) {
       const stored =
         typeof window !== 'undefined'
-          ? localStorage.getItem(`mitra_guest_messages_${activeSessionId}`) || '[]'
+          ? sessionStorage.getItem(`mitra_guest_messages_${activeSessionId}`) || '[]'
           : '[]';
       try {
         const msgs = JSON.parse(stored) as ChatMessage[];
@@ -427,7 +422,18 @@ export default function App() {
 
   // Start a fresh chat and unlock all subject choices again
   const handleNewSession = () => {
-    hasAutoSelectedSessionRef.current = true;
+    // For guest mode: chat history is removed when the session ends
+    if (user && isGuestUser(user)) {
+      if (typeof window !== 'undefined') {
+        try {
+          sessionStorage.clear();
+        } catch {
+          // ignore
+        }
+      }
+      setSessions([]);
+    }
+
     const newId = makeId('sess');
     setActiveSessionId(newId);
     setLockedSubject(null);
@@ -444,14 +450,14 @@ export default function App() {
         const sessionKey = `mitra_guest_sessions_${user.uid}`;
         const storedSessionsStr =
           typeof window !== 'undefined'
-            ? localStorage.getItem(sessionKey) || '[]'
+            ? sessionStorage.getItem(sessionKey) || '[]'
             : '[]';
         const parsed = (JSON.parse(storedSessionsStr) as StudySession[]).filter(
           (s) => s.id !== id
         );
         if (typeof window !== 'undefined') {
-          localStorage.setItem(sessionKey, JSON.stringify(parsed));
-          localStorage.removeItem(`mitra_guest_messages_${id}`);
+          sessionStorage.setItem(sessionKey, JSON.stringify(parsed));
+          sessionStorage.removeItem(`mitra_guest_messages_${id}`);
         }
         setSessions(parsed);
       } else {
@@ -482,7 +488,7 @@ export default function App() {
         const sessionKey = `mitra_guest_sessions_${targetUser.uid}`;
         const storedSessionsStr =
           typeof window !== 'undefined'
-            ? localStorage.getItem(sessionKey) || '[]'
+            ? sessionStorage.getItem(sessionKey) || '[]'
             : '[]';
         let currentGuestSessions: StudySession[] = [];
         try {
@@ -524,14 +530,14 @@ export default function App() {
         }
 
         if (typeof window !== 'undefined') {
-          localStorage.setItem(sessionKey, JSON.stringify(currentGuestSessions));
+          sessionStorage.setItem(sessionKey, JSON.stringify(currentGuestSessions));
         }
         setSessions(currentGuestSessions);
 
         const msgKey = `mitra_guest_messages_${sessionId}`;
         const storedMsgsStr =
           typeof window !== 'undefined'
-            ? localStorage.getItem(msgKey) || '[]'
+            ? sessionStorage.getItem(msgKey) || '[]'
             : '[]';
         let currentGuestMsgs: ChatMessage[] = [];
         try {
@@ -541,7 +547,7 @@ export default function App() {
         }
         currentGuestMsgs.push(sanitized);
         if (typeof window !== 'undefined') {
-          localStorage.setItem(msgKey, JSON.stringify(currentGuestMsgs));
+          sessionStorage.setItem(msgKey, JSON.stringify(currentGuestMsgs));
         }
         setFirestoreMessages(currentGuestMsgs);
         return;
@@ -902,7 +908,12 @@ export default function App() {
     try {
       const signedInUser = await signInWithGoogle();
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('mitra_guest_user');
+        try {
+          localStorage.removeItem('mitra_guest_user');
+          sessionStorage.clear();
+        } catch {
+          // ignore
+        }
       }
       await ensureUserProfile(signedInUser, micLang);
 
@@ -912,7 +923,6 @@ export default function App() {
       setSignInReason(null);
 
       if (pending) {
-        hasAutoSelectedSessionRef.current = true;
         const freshId = makeId('sess');
         setActiveSessionId(freshId);
         setFirestoreMessages([]);
@@ -942,16 +952,30 @@ export default function App() {
   };
 
   const handleContinueAsGuest = useCallback(() => {
+    // Clear any previous guest storage so guest always begins a clean, isolated session
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.clear();
+        localStorage.removeItem('mitra_guest_user');
+      } catch {
+        // ignore
+      }
+    }
     const guestUser: AppUser = {
       uid: 'guest_student',
       displayName: 'Madhyamik Student (Guest)',
       email: 'guest@student.local',
       isGuest: true,
     };
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('mitra_guest_user', JSON.stringify(guestUser));
-    }
     setUser(guestUser);
+    setSessions([]);
+    setFirestoreMessages([]);
+    const freshId = makeId('sess');
+    setActiveSessionId(freshId);
+    setLockedSubject(null);
+    setSolveMode(false);
+    setAttachment(null);
+    setChatError(null);
     setSignInGateOpen(false);
     setSignInReason(null);
     setAuthError(null);
@@ -959,11 +983,6 @@ export default function App() {
     const pending = pendingActionRef.current;
     pendingActionRef.current = null;
     if (pending) {
-      hasAutoSelectedSessionRef.current = true;
-      const freshId = makeId('sess');
-      setActiveSessionId(freshId);
-      setFirestoreMessages([]);
-      setAttachment(null);
       setLockedSubject(pending.subject ?? null);
 
       if (pending.prompt) {
@@ -982,13 +1001,17 @@ export default function App() {
   const handleSignOut = async () => {
     try {
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('mitra_guest_user');
+        try {
+          sessionStorage.clear();
+          localStorage.removeItem('mitra_guest_user');
+        } catch {
+          // ignore
+        }
       }
       if (user && !isGuestUser(user)) {
         await signOutUser();
       }
       setUser(null);
-      hasAutoSelectedSessionRef.current = false;
       setSessions([]);
       setActiveSessionId(makeId('sess'));
       setLockedSubject(null);

@@ -264,16 +264,32 @@ export function Sidebar({
                   <p className="text-[11px] text-[#5A5C60] truncate">
                     {isGuestUser(user)
                       ? language === 'bn'
-                        ? 'গেস্ট মোড (লোকাল স্টোরেজ)'
-                        : 'Guest Mode · Saved on Device'
+                        ? 'গেস্ট মোড (শুধুমাত্র এই সেশনের জন্য)'
+                        : 'Guest Mode · Current Session Only'
                       : user.email || 'Cloud Firestore Synced'}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={onSignOut}
-                  aria-label={isGuestUser(user) ? 'Exit Guest Mode' : 'Sign out'}
-                  title={isGuestUser(user) ? 'Exit Guest Mode' : 'Sign out'}
+                  aria-label={
+                    isGuestUser(user)
+                      ? language === 'bn'
+                        ? 'গেস্ট সেশন শেষ করো'
+                        : 'Exit Guest Session'
+                      : language === 'bn'
+                        ? 'সাইন আউট'
+                        : 'Sign out'
+                  }
+                  title={
+                    isGuestUser(user)
+                      ? language === 'bn'
+                        ? 'গেস্ট সেশন শেষ করো'
+                        : 'Exit Guest Session'
+                      : language === 'bn'
+                        ? 'সাইন আউট'
+                        : 'Sign out'
+                  }
                   className="p-2 rounded-lg text-[#5A5C60] hover:text-[#141517] hover:bg-[#DFDCD2] transition-colors shrink-0 cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
