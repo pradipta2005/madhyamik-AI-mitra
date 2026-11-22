@@ -904,6 +904,126 @@ async function startServer() {
     }
   });
 
+  app.post('/api/live-voice-turn', async (req, res) => {
+    try {
+      const {
+        message,
+        subject = 'All Subjects',
+        language = 'bn',
+        history = [],
+      } = req.body as {
+        message?: string;
+        subject?: WbbseSubject;
+        language?: LanguageCode;
+        history?: Array<{ speaker: 'student' | 'tutor'; text: string }>;
+      };
+
+      if (typeof message !== 'string' || !message.trim()) {
+        res.status(400).json({ error: 'Message cannot be empty.' });
+        return;
+      }
+
+      const cleanMessage = message.trim();
+      const detectedLang = language === 'bn' ? 'bn' : 'en';
+
+      const systemInstruction = `You are "Madhyamik AI Mitra", an expert, deeply caring, and authoritative oral viva examiner and concept tutor for West Bengal Board of Secondary Education (WBBSE) Class 10 (Madhyamik Pariksha).
+CURRENT SUBJECT: ${subject}
+LANGUAGE DIRECTIVE:
+${detectedLang === 'bn' ? 'Speak and reply purely in natural, refined, encouraging West Bengal classroom Bengali (শুদ্ধ ও প্রাঞ্জল কথ্য বাংলা).' : 'Speak and reply in clear, natural, encouraging English appropriate for WBBSE Class 10 students.'}
+
+ADAPTIVE ORAL PREPARATION & VIVA EXAMINATION RULES:
+1. SPOKEN AUDIO FLUENCY:
+   - Your response will be spoken aloud to the student sentence-by-sentence via audio.
+   - Speak in clear, natural, well-punctuated sentences (use proper দাঁড়ি "।" or periods "." and commas).
+   - NEVER use raw LaTeX ($), raw Greek symbols (α, β, θ), code blocks, or raw markdown tables in spoken narration. Write every mathematical term and symbol phonetically in words (e.g. "আলফা", "বয়েল-এর সূত্র", "চার্লস-এর সূত্র", "এক্স স্কোয়ার", "ওহমের সূত্র").
+
+2. ADAPTIVE LENGTH HANDLING (LONG & SHORT QUESTIONS AND ANSWERS):
+   - CASE A: SHORT VIVA / RAPID REVISION:
+     If the student asks a quick 1-mark question or gives a brief 1-line answer:
+     Provide immediate warm feedback (1 sentence), correct any misconception gently, and ask the next targeted viva question (1–2 sentences).
+   - CASE B: LONG QUESTIONS & CONCEPT EXPLANATIONS (5-Mark / Broad Questions):
+     If the student asks a detailed or long question (e.g. "Explain the character of Kshitis in Koni", "Derive the refraction formula in a prism", "Explain Mitosis vs Meiosis cell division", "Explain Swadeshi movement causes and impact"):
+     Provide a thorough, comprehensive, step-by-step spoken answer. Divide your answer into clear, spoken stages (ভূমিকা / Background, মূল পয়েন্ট / Core Points, উপসংহার ও স্কোরিং টিপস / Examiner Scoring Tips) so the student learns how to structure a full-marks 5-mark answer in the exam hall.
+   - CASE C: LONG STUDENT RESPONSE EVALUATION:
+     If the student speaks or recites a long answer to practice:
+     Evaluate their spoken answer like an experienced senior board examiner! State their estimated score (e.g. "৫ এর মধ্যে তুমি ৪ পাবে"), praise the strong points, point out any missed board keywords or historical dates/scientific units, and give the exact finishing sentence to secure full marks.
+
+3. STRICT SUBJECT BOUNDARIES:
+   - Strictly stay within ${subject}.
+   - In English: NO Koni, NO Bengali stories, NO 5-mark literature questions.
+   - In Bengali: Keep all characters, quotes, and references strictly in authentic Bengali.`;
+
+      const contents: Array<{
+        role: 'user' | 'model';
+        parts: Array<{ text?: string }>;
+      }> = [];
+
+      const recentHistory = Array.isArray(history) ? history.slice(-6) : [];
+      for (const turn of recentHistory) {
+        if (!turn?.text) continue;
+        contents.push({
+          role: turn.speaker === 'student' ? 'user' : 'model',
+          parts: [{ text: turn.text.slice(0, 4000) }],
+        });
+      }
+
+      contents.push({ role: 'user', parts: [{ text: cleanMessage }] });
+
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
+      });
+      if (typeof res.flushHeaders === 'function') {
+        res.flushHeaders();
+      }
+
+      const sendEvent = (payload: Record<string, unknown>) => {
+        res.write(`data: ${JSON.stringify(payload)}\n\n`);
+        if (typeof (res as unknown as { flush?: () => void }).flush === 'function') {
+          (res as unknown as { flush: () => void }).flush();
+        }
+      };
+
+      sendEvent({ type: 'start', language: detectedLang });
+
+      let fullText = '';
+      try {
+        const streamResult = await generateResearchStreamWithFallback(
+          getAiClient(),
+          contents,
+          systemInstruction,
+          false // fast conversational oral viva without external search overhead
+        );
+
+        for await (const chunk of streamResult.stream) {
+          const chunkText = chunk.text;
+          if (chunkText) {
+            fullText += chunkText;
+            sendEvent({ type: 'chunk', text: chunkText });
+          }
+        }
+
+        sendEvent({
+          type: 'done',
+          text: fullText.trim(),
+        });
+        res.end();
+      } catch (err) {
+        console.error('Live voice turn stream error:', err);
+        sendEvent({
+          type: 'error',
+          error: 'Voice response could not be generated. Please try again.',
+        });
+        res.end();
+      }
+    } catch (error) {
+      console.error('Live voice turn endpoint error:', error);
+      res.status(500).json({ error: 'Live voice processing failed.' });
+    }
+  });
+
   app.post('/api/upload-pdf', async (req, res) => {
     try {
       const { fileName, mimeType, base64Data } = req.body as {
