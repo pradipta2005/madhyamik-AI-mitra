@@ -275,6 +275,13 @@ export function cleanVoiceRecognitionText(raw: string, lang: LanguageCode): stri
       [/(?<![\p{L}\p{N}])সাজেসন(?![\p{L}\p{N}])/gui, 'সাজেশন'],
       [/(?<![\p{L}\p{N}])bangla\s+important\s+questions?(?![\p{L}\p{N}])/gui, 'বাংলা গুরুত্বপূর্ণ প্রশ্ন'],
       [/(?<![\p{L}\p{N}])important\s+questions?(?![\p{L}\p{N}])/gui, 'গুরুত্বপূর্ণ প্রশ্ন'],
+      [/(?<![\p{L}\p{N}])bangla(?![\p{L}\p{N}])/gui, 'বাংলা'],
+      [/(?<![\p{L}\p{N}])koni(?![\p{L}\p{N}])/gui, 'কোনি'],
+      [/(?<![\p{L}\p{N}])gonit(?![\p{L}\p{N}])/gui, 'গণিত'],
+      [/(?<![\p{L}\p{N}])bhouto\s*biggan(?![\p{L}\p{N}])/gui, 'ভৌতবিজ্ঞান'],
+      [/(?<![\p{L}\p{N}])jibon\s*biggan(?![\p{L}\p{N}])/gui, 'জীবনবিজ্ঞান'],
+      [/(?<![\p{L}\p{N}])itihas(?![\p{L}\p{N}])/gui, 'ইতিহাস'],
+      [/(?<![\p{L}\p{N}])bhugol(?![\p{L}\p{N}])/gui, 'ভূগোল'],
     ];
     for (const [re, rep] of bnReplacements) {
       text = text.replace(re, rep);
@@ -911,6 +918,20 @@ function normalizeBlackboardLines(raw: unknown): BlackboardLine[] {
   }
 
   let finalCleanText = cleanText.trim();
+
+  // Strict cross-subject prose sanitization to eliminate hallucinations
+  if (currentSubject === 'English') {
+    finalCleanText = finalCleanText
+      .replace(/(?:^|\n)[^\n]*(?:rapid reader|koni\b|moti nandi|gyanchokkhu|bohurupee)[^\n]*(?:\n|$)/gi, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  } else if (currentSubject === 'Bengali') {
+    finalCleanText = finalCleanText
+      .replace(/(?:^|\n)[^\n]*(?:father['’]s help|r\.?\s*k\.?\s*narayan|passing away of bapu|our runaway kite)[^\n]*(?:\n|$)/gi, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
   if (youtubeVideos.length === 0) {
     finalCleanText = finalCleanText
       .replace(

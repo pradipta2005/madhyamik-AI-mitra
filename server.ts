@@ -289,6 +289,7 @@ QUERY-ADAPTIVE PEDAGOGICAL MODES (RESPOND ACCORDINGLY AS A SENIOR WBBSE EXAMINER
 MODE 1: STRATEGIC CHAPTER IMPORTANCE, SYLLABUS PRIORITIZATION & EXAM GUIDANCE
 (Triggered when student asks: "What are the most important chapters for this year and why?", "Which chapters to prioritize?", "Exam suggestions/strategy for this year", "Marks weightage and blueprint", "Passing / 90%+ strategy")
 - DO NOT dump a 20-question MCQ/SAQ/LAQ drill! The student is seeking high-level, strategic board exam intelligence and chapter prioritization.
+- CRITICAL REGULATION FOR MODE 1: NEVER output a numbered "মাস্টার হাই-ইয়েল্ড MCQ ব্যাংক", VSA question list, or 5-mark LA list in the main text! Keep Mode 1 exclusively focused on strategic prioritization, syllabus blueprint, rotation reasons, and examiner scoring tips. Put 3–4 exemplar PYQ cards strictly inside the \`\`\`json:pyq ... \`\`\` block at the very end.
 - Deliver an authoritative, structured, highly practical Madhyamik Dossier:
   ১. Priority Tier Breakdown (শীর্ষ অগ্রাধিকারপ্রাপ্ত অধ্যায় ও বিভাগসমূহ):
      - Tier 1 (Must-Master / Highest Marks Weightage): Identify the top 2–3 prose/poetry/topics for this year with their exact board marks.
@@ -407,6 +408,12 @@ interface ResearchStreamResult {
   }>;
 }
 
+const OPENROUTER_CANDIDATE_MODELS = [
+  'openrouter/auto',
+  'google/gemini-3.5-flash-lite',
+  'meta-llama/llama-3.3-70b-instruct',
+];
+
 async function callOpenRouter(
   contents: Array<{
     role: 'user' | 'model';
@@ -432,34 +439,48 @@ async function callOpenRouter(
     });
   }
 
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
-      'X-Title': 'Madhyamik AI Mitra',
-    },
-    body: JSON.stringify({
-      model: 'openrouter/free',
-      messages,
-      temperature: 0.3,
-      max_tokens: 8192,
-      plugins: enableSearch ? [{ id: 'web' }] : undefined,
-    }),
-    signal: AbortSignal.timeout(20000),
-  });
+  let lastErr = 'Unknown OpenRouter error';
+  for (const candidateModel of OPENROUTER_CANDIDATE_MODELS) {
+    try {
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
+          'X-Title': 'Madhyamik AI Mitra',
+        },
+        body: JSON.stringify({
+          model: candidateModel,
+          messages,
+          temperature: 0.3,
+          max_tokens: 3000,
+          plugins: enableSearch ? [{ id: 'web' }] : undefined,
+        }),
+        signal: AbortSignal.timeout(20000),
+      });
 
-  if (!res.ok) {
-    const errBody = await res.text();
-    throw new Error(`OpenRouter error (${res.status}): ${errBody.slice(0, 300)}`);
+      if (!res.ok) {
+        const errBody = await res.text();
+        lastErr = `OpenRouter [${candidateModel}] (${res.status}): ${errBody.slice(0, 200)}`;
+        console.warn(lastErr);
+        continue;
+      }
+
+      const data = (await res.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+      };
+      const text = data.choices?.[0]?.message?.content || '';
+      if (text) {
+        return { text };
+      }
+    } catch (candidateErr) {
+      lastErr = candidateErr instanceof Error ? candidateErr.message : String(candidateErr);
+      console.warn(`OpenRouter [${candidateModel}] fetch error:`, lastErr);
+    }
   }
 
-  const data = (await res.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  const text = data.choices?.[0]?.message?.content || '';
-  return { text };
+  throw new Error(`OpenRouter failed: ${lastErr}`);
 }
 
 async function* callOpenRouterStream(
@@ -487,31 +508,48 @@ async function* callOpenRouterStream(
     });
   }
 
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
-      'X-Title': 'Madhyamik AI Mitra',
-    },
-    body: JSON.stringify({
-      model: 'openrouter/free',
-      messages,
-      temperature: 0.3,
-      stream: true,
-      max_tokens: 8192,
-      plugins: enableSearch ? [{ id: 'web' }] : undefined,
-    }),
-    signal: AbortSignal.timeout(25000),
-  });
+  let streamRes: Response | null = null;
+  let activeModel = OPENROUTER_CANDIDATE_MODELS[0];
 
-  if (!res.ok || !res.body) {
-    const errBody = await res.text();
-    throw new Error(`OpenRouter streaming error (${res.status}): ${errBody.slice(0, 300)}`);
+  for (const candidateModel of OPENROUTER_CANDIDATE_MODELS) {
+    try {
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
+          'X-Title': 'Madhyamik AI Mitra',
+        },
+        body: JSON.stringify({
+          model: candidateModel,
+          messages,
+          temperature: 0.3,
+          stream: true,
+          max_tokens: 3000,
+          plugins: enableSearch ? [{ id: 'web' }] : undefined,
+        }),
+        signal: AbortSignal.timeout(25000),
+      });
+
+      if (res.ok && res.body) {
+        streamRes = res;
+        activeModel = candidateModel;
+        break;
+      }
+      const errBody = await res.text();
+      console.warn(`OpenRouter stream [${candidateModel}] error (${res.status}): ${errBody.slice(0, 200)}`);
+    } catch (modelErr) {
+      console.warn(`OpenRouter stream [${candidateModel}] failed:`, modelErr);
+    }
   }
 
-  const reader = res.body.getReader();
+  if (!streamRes || !streamRes.body) {
+    throw new Error(`OpenRouter streaming failed across all candidate models.`);
+  }
+
+  console.log(`Streaming research via OpenRouter [${activeModel}]...`);
+  const reader = streamRes.body.getReader();
   const decoder = new TextDecoder('utf-8');
   let buffer = '';
 
@@ -1091,6 +1129,9 @@ async function startServer() {
           'Connection': 'keep-alive',
           'X-Accel-Buffering': 'no',
         });
+        if (typeof res.flushHeaders === 'function') {
+          res.flushHeaders();
+        }
 
         const sendEvent = (payload: Record<string, unknown>) => {
           res.write(`data: ${JSON.stringify(payload)}\n\n`);

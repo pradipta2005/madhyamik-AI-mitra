@@ -730,6 +730,7 @@ export default function App() {
             message: queryText,
             subject: chosenSubject,
             history: historyPayload,
+            stream: true,
             solveMode: effectiveSolveMode,
             simplificationLevel: options?.simplificationLevel ?? 1,
             solveAction: options?.solveAction ?? 'start',

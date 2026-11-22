@@ -485,4 +485,25 @@ test('parseAssistantResponseBlocks sanitizes cross-subject hallucinations (Koni 
   assert.equal(sanitized.youtubeVideos.length, 0);
 });
 
+test('cleanVoiceRecognitionText normalizes repeated Banglish voice input and deduplicates', () => {
+  const repeated = 'Bangla Bangla Bangla important question';
+  const cleaned = cleanVoiceRecognitionText(repeated, 'bn');
+  assert.equal(cleaned, 'বাংলা গুরুত্বপূর্ণ প্রশ্ন');
+});
+
+test('parseAssistantResponseBlocks strips hallucinated Koni / Rapid Reader prose under English', () => {
+  const englishProseWithKoni = `For Madhyamik 2026, the WBBSE English syllabus:
+Prose: Father's Help and The Passing Away of Bapu.
+Poetry: Fable and My Own True Family.
+Rapid Reader (12 marks): Koni (Moti Nandi). 3-mark and 5-mark questions are mandatory.
+Grammar: Voice change and phrasal verbs.`;
+
+  const cleaned = parseAssistantResponseBlocks(englishProseWithKoni, 'English', false);
+  assert.equal(cleaned.cleanText.includes('Rapid Reader'), false);
+  assert.equal(cleaned.cleanText.includes('Koni'), false);
+  assert.ok(cleaned.cleanText.includes("Father's Help"));
+  assert.ok(cleaned.cleanText.includes('Fable'));
+});
+
+
 
