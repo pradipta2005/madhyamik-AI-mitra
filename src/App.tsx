@@ -205,12 +205,11 @@ export default function App() {
   const [minLoadingDone, setMinLoadingDone] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
 
-  // Deliberate brand entrance: ensures the loading animation displays smoothly
-  // for at least 1.6s on first arrival rather than flickering away in 50ms.
+  // Smooth and prompt brand mount without sluggish blocking delays
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setMinLoadingDone(true);
-    }, 1600);
+    }, 250);
     return () => window.clearTimeout(timer);
   }, []);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -309,16 +308,6 @@ export default function App() {
       try {
         const parsed = JSON.parse(stored) as StudySession[];
         setSessions(parsed);
-        if (
-          !hasAutoSelectedSessionRef.current &&
-          parsed.length > 0 &&
-          !pendingActionRef.current
-        ) {
-          hasAutoSelectedSessionRef.current = true;
-          const first = parsed[0];
-          setActiveSessionId(first.id);
-          setLockedSubject(first.subject);
-        }
       } catch {
         setSessions([]);
       }
@@ -329,16 +318,6 @@ export default function App() {
       user.uid,
       (cloudSessions) => {
         setSessions(cloudSessions);
-        if (
-          !hasAutoSelectedSessionRef.current &&
-          cloudSessions.length > 0 &&
-          !pendingActionRef.current
-        ) {
-          hasAutoSelectedSessionRef.current = true;
-          const first = cloudSessions[0];
-          setActiveSessionId(first.id);
-          setLockedSubject(first.subject);
-        }
       },
       (err) => {
         console.error('Session subscription error:', err);
@@ -346,6 +325,18 @@ export default function App() {
     );
     return () => unsub();
   }, [authReady, user]);
+
+  // Auto-select latest session on initial return if user hasn't explicitly clicked new chat
+  useEffect(() => {
+    if (!authReady || !user || sessions.length === 0) return;
+    if (!hasAutoSelectedSessionRef.current) {
+      hasAutoSelectedSessionRef.current = true;
+      const latest = sessions[0];
+      if (latest) {
+        handleSelectSession(latest.id);
+      }
+    }
+  }, [authReady, user, sessions]);
 
   // Subscribe to messages for active session (cloud Firestore or localStorage)
   useEffect(() => {
@@ -643,7 +634,7 @@ export default function App() {
         setInputValue('');
       }
 
-      const detectedLang = detectLanguage(queryText);
+      const detectedLang = detectLanguage(queryText, chosenSubject);
       setMicLang(detectedLang);
 
       const sessionId = sessionIdOverride ?? activeSessionId;

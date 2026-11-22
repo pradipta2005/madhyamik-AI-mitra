@@ -2,8 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { PyqBankEntry, StudySession } from '../types.ts';
+import type { PyqBankEntry, StudySession, WbbseVideoEntry } from '../types.ts';
 import {
+  cleanVoiceRecognitionText,
+  deduplicateConsecutiveWords,
   detectLanguage,
   detectQueryIntent,
   extractYouTubeVideoId,
@@ -19,11 +21,15 @@ import {
   parseAuthError,
   sanitizeMessageForStorage,
   searchPyqBank,
+  searchVideoBank,
   stripInternalFences,
 } from './wbbseResearch.ts';
 
 const pyqBankPath = path.resolve(process.cwd(), 'src/data/wbbse_pyq_bank.json');
 const pyqBank = JSON.parse(fs.readFileSync(pyqBankPath, 'utf-8')) as PyqBankEntry[];
+
+const videoBankPath = path.resolve(process.cwd(), 'src/data/wbbse_video_bank.json');
+const videoBank = JSON.parse(fs.readFileSync(videoBankPath, 'utf-8')) as WbbseVideoEntry[];
 
 test('detectLanguage recognizes Bengali Unicode script', () => {
   assert.equal(detectLanguage('ভৌত বিজ্ঞান আলোর প্রতিসরণ সহজ ভাষায় বোঝাও'), 'bn');
@@ -365,6 +371,78 @@ test('sanitizeMessageForStorage strips isStreaming for strict Firestore complian
 
   assert.equal('isStreaming' in sanitized, false);
   assert.equal((sanitized as unknown as Record<string, unknown>).isStreaming, undefined);
+});
+
+test('deduplicateConsecutiveWords collapses repeated single words and 2-word phrases', () => {
+  const repeated =
+    'Bangla Bangla Bangla Bangla Bangla Bangla important question বাংলা বাংলা গুরুত্বপূর্ণ গুরুত্বপূর্ণ প্রশ্ন প্রশ্ন Bangla important question Bangla important question';
+  const deduped = deduplicateConsecutiveWords(repeated);
+  assert.equal(
+    deduped,
+    'Bangla important question বাংলা গুরুত্বপূর্ণ প্রশ্ন Bangla important question'
+  );
+});
+
+test('cleanVoiceRecognitionText normalizes Madhyamik terms and avoids repetitions', () => {
+  const cleanedEn = cleanVoiceRecognitionText('madhamik wbbse pyqs ohms law', 'en');
+  assert.equal(cleanedEn, "Madhyamik WBBSE PYQs Ohm's law");
+
+  const cleanedBn = cleanVoiceRecognitionText('মাদ্যমিক উপপাদ বাংলা গুরুত্বপূর্ণ প্রশ্ন', 'bn');
+  assert.equal(cleanedBn, 'মাধ্যমিক উপপাদ্য বাংলা গুরুত্বপূর্ণ প্রশ্ন');
+
+  // Exact scenario from student speech recognition runaway repetition
+  const runawayScreenshotText =
+    'Bangla Bangla Bangla Bangla Bangla Bangla important question বাংলা গুরুত্বপূর্ণ প্রশ্ন গুলো দাও Bangla important question Bangla important question বাংলা গুরুত্বপূর্ণ প্রশ্ন গুলো দাও Bangla important question বাংলা গুরুত্বপূর্ণ প্রশ্ন গুলো দাও';
+  const cleanedRunaway = cleanVoiceRecognitionText(runawayScreenshotText, 'bn');
+  assert.ok(cleanedRunaway.includes('বাংলা গুরুত্বপূর্ণ প্রশ্ন'));
+  // Ensure "Bangla" is not repeated 6+ times consecutively
+  assert.equal(cleanedRunaway.includes('Bangla Bangla'), false);
+  assert.equal(cleanedRunaway.includes('বাংলা বাংলা'), false);
+});
+
+test('detectLanguage prioritizes Bengali when subject is Bengali or Banglish has literature tokens', () => {
+  // Query from user screenshot 2
+  assert.equal(detectLanguage('Koni er important mcq questions', 'Bengali'), 'bn');
+  assert.equal(detectLanguage('Koni er important mcq questions'), 'bn');
+  assert.equal(detectLanguage('Gyanchokkhu theke 5-mark question dao', 'Bengali'), 'bn');
+  assert.equal(detectLanguage('Explain Koni in English please', 'Bengali'), 'en');
+});
+
+test('searchVideoBank retrieves verified YouTube lectures for Light, Koni, and Quadratic Equations', () => {
+  const lightVids = searchVideoBank(videoBank, 'আলোর প্রতিসরণ সহজ ভাষায় বোঝাও', 'Physical Science', 'bn');
+  assert.ok(lightVids.length >= 1);
+  assert.ok(lightVids[0].url.includes('youtube.com/watch?v=JsZFGZAd0kI'));
+  assert.equal(lightVids[0].verified, true);
+
+  const koniVids = searchVideoBank(videoBank, 'Koni er important mcq questions', 'Bengali', 'bn');
+  assert.ok(koniVids.length >= 1);
+  assert.ok(koniVids.some((v) => v.url.includes('0jRIAGmlI5A') || v.url.includes('RL4kxukV9yQ')));
+
+  const mathVids = searchVideoBank(videoBank, 'একচলবিশিষ্ট দ্বিঘাত সমীকরণ সূত্র ও সমাধান', 'Mathematics', 'bn');
+  assert.ok(mathVids.length >= 1);
+  assert.ok(mathVids.some((v) => v.url.includes('YvMmgrdJqrE') || v.url.includes('bdaOnDO0Q8M')));
+});
+
+test('searchPyqBank returns rich high-yield entries for Koni and Bengali literature', () => {
+  const koniPyqs = searchPyqBank(pyqBank, 'Koni er important mcq questions', 'Bengali', 5);
+  assert.ok(koniPyqs.length >= 2, 'Expected multiple high-yield PYQ entries for Koni');
+  assert.ok(koniPyqs.some((p) => p.id === 'ben-koni-04'));
+  assert.ok(koniPyqs.some((p) => p.questionBn.includes('কোনি')));
+});
+
+test('parseAssistantResponseBlocks removes dangling empty YouTube tutorial headings when no videos exist', () => {
+  const sampleWithDangling = `ভৌত বিজ্ঞান আলোর প্রতিসরণ নিয়ে আলোচনা:
+
+### ইউটিউব ভিডিও টিউটোরিয়াল:
+সহজভাবে বোঝার জন্য নিচের ভিডিওগুলো দেখতে পারো:
+
+টিপস: পরীক্ষার খাতায় চিত্র অঙ্কন অপরিহার্য।`;
+
+  const parsed = parseAssistantResponseBlocks(sampleWithDangling);
+  assert.equal(parsed.youtubeVideos.length, 0);
+  assert.equal(parsed.cleanText.includes('ইউটিউব ভিডিও টিউটোরিয়াল'), false);
+  assert.equal(parsed.cleanText.includes('সহজভাবে বোঝার জন্য নিচের ভিডিওগুলো দেখতে পারো'), false);
+  assert.ok(parsed.cleanText.includes('টিপস: পরীক্ষার খাতায়'));
 });
 
 

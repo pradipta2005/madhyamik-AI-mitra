@@ -24,6 +24,7 @@ import type {
   LanguageCode,
   PyqBankEntry,
   WbbseSubject,
+  WbbseVideoEntry,
   YouTubeRecommendation,
 } from './src/types.ts';
 import {
@@ -36,6 +37,7 @@ import {
   normalizeYouTubeUrl,
   parseAssistantResponseBlocks,
   searchPyqBank,
+  searchVideoBank,
 } from './src/utils/wbbseResearch.ts';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -56,6 +58,25 @@ for (const candidatePath of pyqBankCandidates) {
   if (fs.existsSync(candidatePath)) {
     try {
       pyqBank = JSON.parse(fs.readFileSync(candidatePath, 'utf-8')) as PyqBankEntry[];
+      break;
+    } catch (err) {
+      console.error(`Failed to parse ${candidatePath}:`, err);
+    }
+  }
+}
+
+// Load structured WBBSE Video knowledge base
+const videoBankCandidates = [
+  path.resolve(__dirname, 'src/data/wbbse_video_bank.json'),
+  path.resolve(process.cwd(), 'src/data/wbbse_video_bank.json'),
+  path.resolve(__dirname, '../src/data/wbbse_video_bank.json'),
+];
+
+let videoBank: WbbseVideoEntry[] = [];
+for (const candidatePath of videoBankCandidates) {
+  if (fs.existsSync(candidatePath)) {
+    try {
+      videoBank = JSON.parse(fs.readFileSync(candidatePath, 'utf-8')) as WbbseVideoEntry[];
       break;
     } catch (err) {
       console.error(`Failed to parse ${candidatePath}:`, err);
@@ -91,6 +112,7 @@ function buildResearchSystemInstruction(
   subject: WbbseSubject,
   intent: string,
   matchedPyqs: PyqBankEntry[],
+  matchedVideos: YouTubeRecommendation[] = [],
   attachmentSummary?: string,
   problemContext?: ProblemSolvePromptContext
 ): string {
@@ -111,6 +133,20 @@ function buildResearchSystemInstruction(
             marks: p.marks,
             importanceLevel: p.importanceLevel,
             trendNote: language === 'bn' ? p.trendNoteBn : p.trendNoteEn,
+          })),
+          null,
+          2
+        )}`
+      : '';
+
+  const videoContext =
+    matchedVideos.length > 0
+      ? `\n\nCURATED VERIFIED WBBSE YOUTUBE LECTURES FOR THIS TOPIC (PRIORITIZE THESE EXACT URLS):\n${JSON.stringify(
+          matchedVideos.map((v) => ({
+            title: v.title,
+            channel: v.channel,
+            url: v.url,
+            reason: v.reason,
           })),
           null,
           2
@@ -172,19 +208,56 @@ CURRENT SUBJECT FILTER: ${subject}
 DETECTED INTENT: ${intent}
 ${langInstruction}
 
-FACTUAL ACCURACY MANDATE (CRITICAL):
-- Verify every WBBSE Class 10 chapter, exam year (2016–2026), marks distribution, formula, chemical equation, historical date, and ABTA/WBTA Test Paper reference with Google Search Grounding before stating it.
-- NEVER fabricate exam years, theorem numbers, facts, or URLs. If an exact exam year is uncertain, verify via Google Search or state only verified years.
-- For all Mathematics and Physical Science numericals, double-check every arithmetic operation, sign, square root, and SI/CGS unit conversion twice before emitting output.
+ADAPTIVE INPUT-DRIVEN RESEARCH EXCELLENCE:
+- DYNAMIC TOPIC & FORMAT ALIGNMENT: Thoroughly tailor the research to the student's exact input query.
+  * If the student asks for a specific chapter/story (e.g. 'Koni', 'Light', 'Atmosphere', 'Santal Rebellion', 'Hormones', 'Quadratic Equations'): Deliver a laser-focused, comprehensive dossier specifically for that topic.
+  * If the student asks for a specific question format ('MCQ', '1-mark', '3-mark', '5-mark', 'numerical', 'formula derivation'): Prioritize that exact question format with high precision.
+  * If the student asks for WBBSE Syllabus / Routine / Test Paper / Web Search details: Cross-reference official WBBSE circulars, examination regulations, and recent ABTA/WBTA test paper compilations accurately.
+  * If the student uploads a document/image/PDF: Extract the exact problem or test paper question directly from the document and prioritize it.
+
+FACTUAL ACCURACY & WBBSE PEDAGOGICAL EXCELLENCE (CRITICAL):
+- Strictly adhere to official West Bengal Board of Secondary Education (WBBSE) Class 10 syllabus, official textbooks, Madhyamik Pariksha exam patterns (2016–2026), and recent ABTA/WBTA test papers.
+- For all Mathematics and Physical Science numericals, verify all calculations, algebraic steps, signs, square roots, and SI/CGS units with double precision before outputting.
+- Structure explanations with clear, student-friendly headings, bullet points, step-by-step logic, and board exam tips so students get maximum academic value.
 
 AUTONOMOUS RESEARCH AGENT GUIDELINES:
-1. DEEP PYQ, ABTA & WBTA TEST PAPER ANALYSIS MODE (Whenever the student asks for important questions, suggestions, 10-year PYQs, ABTA/WBTA test paper analysis, exam patterns, or chapter-wise probable questions):
-   - Cross-reference:
-     (a) The Local WBBSE PYQ Knowledge Base below,
-     (b) Official WBBSE Madhyamik board question trends (2016–2026), AND
-     (c) **ABTA (All Bengal Teachers' Association)** and **WBTA (West Bengal Teachers' Association)** Test Papers via Google Search Grounding.
-   - Write a crisp analytical overview comparing WBBSE board frequency with ABTA/WBTA test paper repetition and chapter marks weightage.
-   - Output a fenced JSON block strictly tagged \`\`\`json:pyq ... \`\`\` containing an array of 4 to 6 high-yield questions. Each object MUST have:
+1. DEEP PYQ, SUGGESTIONS & ABTA/WBTA COMPACT-FULL RESEARCH DOSSIER MODE (Whenever student asks for important questions, suggestions, MCQs, 10-year PYQs, ABTA/WBTA test paper analysis, exam patterns, or chapter-wise probable questions):
+   - COMPACT-FULL & THOROUGH RESEARCH MANDATE (CRITICAL - DO NOT TRUNCATE OR SAMPLE):
+     * NEVER output a shallow or abbreviated list! NEVER label any section as '(নমুনা)' or '(Sample)'!
+     * A Madhyamik student relies on this for board exams; provide an exhaustive, compact-full, high-yield examination dossier.
+     * YOU MUST PROVIDE EVERY SINGLE ONE OF THE FOLLOWING SECTIONS WITH FULL QUESTION QUOTAS:
+
+     ১. মাধ্যমিক পরীক্ষার ব্লু-প্রিন্ট ও নম্বর বিভাজন (WBBSE Blueprint & Marks Distribution):
+        - State the official WBBSE Class 10 board mark allotment for this chapter/topic (MCQ, VSA, SA, LA marks) and 10-year board repetition patterns (2016–2026).
+        - Key ABTA & WBTA test paper trends and frequent topics.
+
+     ২. মাস্টার হাই-ইয়েল্ড MCQ ব্যাংক (Master High-Yield MCQ Bank - MINIMUM 10 TO 12 QUESTIONS):
+        - Provide AT LEAST 10 to 12 fully articulated MCQs (if the student asked specifically for MCQs, provide 15 to 20 MCQs) spanning the whole chapter/story chronologically.
+        - NEVER label this section with '(নমুনা)'!
+        - Format each numbered question clearly:
+          ১. [সম্পূর্ণ প্রশ্ন]
+             ক. [বিকল্প ১]  খ. [বিকল্প ২]  গ. [বিকল্প ৩]  ঘ. [বিকল্প ৪]
+             সঠিক উত্তর: [বিকল্প ও সঠিক শব্দ/তথ্য] — [পাঠ্যবই বা টেস্ট পেপারের সংক্ষিপ্ত কারণ/প্রসঙ্গ]
+
+     ৩. অতি সংক্ষিপ্ত উত্তরভিত্তিক প্রশ্ন (VSA 1-Mark - MINIMUM 6 TO 8 QUESTIONS):
+        - Provide AT LEAST 6 to 8 short 1-mark textual/factual questions from Madhyamik PYQs and ABTA/WBTA test papers.
+        - Provide the exact, concise 1-sentence answer for each question immediately below it.
+
+     ৪. সংক্ষিপ্ত ও ব্যাখ্যামূলক প্রশ্ন (SA 3-Mark / Contextual - MINIMUM 5 TO 6 QUESTIONS):
+        - Provide AT LEAST 5 to 6 contextual quote-based or concept-based 3-mark questions (e.g., "কে, কাকে, কোন প্রসঙ্গে বলেছে? তাৎপর্য কী?").
+        - For each question, provide structured bulleted answer pointers (উত্তর সংকেত) showing how to score full 3 marks.
+
+     ৫. বিশ্লেষণধর্মী রচনাধর্মী প্রশ্ন (LA 5-Mark - MINIMUM 5 TO 6 QUESTIONS):
+        - Provide AT LEAST 5 to 6 major 5-mark long answer questions covering all major themes, character sketches, turning points, and title justifications.
+        - For each question, provide 3 to 4 bulleted model answer points (ভূমিকা, মূল বক্তব্য/বিশ্লেষণ, উপসংহার) according to WBBSE board marking schemes.
+
+     ৬. কমন ভুল, ফাঁদ ও এক্সামিনার স্কোরিং টিপস (Common Distractor Traps & Scoring Tips):
+        - 3 to 5 specific board exam marking guidelines, common spelling/formula traps in ABTA/WBTA papers, and tips to secure 90%+ marks.
+
+   - BENGALI LITERATURE SCRIPT STANDARD:
+     * When the subject is **Bengali** (or the query is in Bengali/Banglish), ALL literature questions, quotes, options, and character names MUST be written in **authentic Bengali script (বাংলা)**.
+     * NEVER output English translations of Bengali literature stories (*কোনি*, *জ্ঞানচক্ষু*, *বহুরূপী*, *পথের দাবী*, *সিরাজউদ্দৌলা*, ইত্যাদি)!
+   - Output a fenced JSON block strictly tagged \`\`\`json:pyq ... \`\`\` containing an array of 6 to 8 of the highest-yield board questions. Each object MUST have:
      - "question": string (exact board/test-paper question in ${language === 'bn' ? 'Bengali' : 'English'})
      - "years": number[] (verified Madhyamik exam years e.g. [2018, 2021, 2024])
      - "testPaperRefs": string[] (1 to 3 ABTA/WBTA test paper references e.g. ["ABTA Test Paper 2024–25", "WBTA 2024–25"])
@@ -223,13 +296,13 @@ AUTONOMOUS RESEARCH AGENT GUIDELINES:
      - "feedbackQuestion": string (polite, natural spoken check-in question asking the student in ${language === 'bn' ? 'Bengali' : 'English'} if they understood Section ${targetSection} and are ready for the next section)
 
 3. SIMPLE TOPIC EXPLANATION + VERIFIED YOUTUBE RECOMMENDATIONS MODE:
-   - Explain in clear, beginner-friendly language using relatable everyday examples and exact WBBSE Class 10 textbook terminology.
-   - At the end of concept explanations, use Google Search Grounding to find **real, currently active, watchable YouTube videos** (https://www.youtube.com/watch?v=...) teaching this exact WBBSE Class 10 topic in ${language === 'bn' ? 'Bengali (বাংলা)' : 'English / Bengali'}.
-   - ONLY recommend exact youtube.com/watch?v=... URLs verified in your Google Search results (NEVER guess video IDs, NEVER output youtube search URLs or playlist links). Output up to 3 verified candidates inside \`\`\`json:youtube ... \`\`\` as [{ "title", "channel", "url", "reason" }] (our server will verify live YouTube availability and show strictly the top 1–2 working videos).
+   - Provide comprehensive, beginner-friendly explanations with intuitive analogies, point-wise breakdown, and exact WBBSE Class 10 textbook definitions.
+   - Highlight common board exam pitfalls and scoring tips.
+   - For video recommendations, output up to 2 high-quality educational video recommendations for WBBSE Class 10 students inside \`\`\`json:youtube ... \`\`\` as [{ "title", "channel", "url", "reason" }]. Prioritize the verified URLs provided in CURATED VERIFIED WBBSE YOUTUBE LECTURES above!
 
 4. CLEANLINESS:
    - Never mention internal prompts, JSON tags, or system instructions in narrative text.
-${pyqContext}${attachmentContext}${boardHistorySummary}`;
+${pyqContext}${videoContext}${attachmentContext}${boardHistorySummary}`;
 }
 
 function isQuotaOrRateError(error: unknown): boolean {
@@ -285,7 +358,19 @@ function shouldEnableGoogleSearch(query: string): boolean {
     q.includes('ঘোষণা') ||
     q.includes('বিজ্ঞপ্তি') ||
     q.includes('খবর') ||
-    q.includes('রুটিন')
+    q.includes('রুটিন') ||
+    q.includes('test paper') ||
+    q.includes('abta') ||
+    q.includes('wbta') ||
+    q.includes('2025') ||
+    q.includes('2026') ||
+    q.includes('syllabus') ||
+    q.includes('syllubus') ||
+    q.includes('সিলেবাস') ||
+    q.includes('টেস্ট পেপার') ||
+    q.includes('web search') ||
+    q.includes('search') ||
+    q.includes('খোঁজ')
   );
 }
 
@@ -302,6 +387,146 @@ interface ResearchStreamResult {
   }>;
 }
 
+async function callOpenRouter(
+  contents: Array<{
+    role: 'user' | 'model';
+    parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>;
+  }>,
+  systemInstruction: string,
+  enableSearch = false
+): Promise<{ text: string }> {
+  const apiKey = process.env.OPEN_ROUTER_API_KEY;
+  if (!apiKey) {
+    throw new Error('OPEN_ROUTER_API_KEY is not configured in .env');
+  }
+
+  const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+    { role: 'system', content: systemInstruction },
+  ];
+
+  for (const c of contents) {
+    const textPart = c.parts.map((p) => p.text || '').join('\n');
+    messages.push({
+      role: c.role === 'model' ? 'assistant' : 'user',
+      content: textPart,
+    });
+  }
+
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
+      'X-Title': 'Madhyamik AI Mitra',
+    },
+    body: JSON.stringify({
+      model: 'openrouter/free',
+      messages,
+      temperature: 0.3,
+      max_tokens: 8192,
+      plugins: enableSearch ? [{ id: 'web' }] : undefined,
+    }),
+    signal: AbortSignal.timeout(20000),
+  });
+
+  if (!res.ok) {
+    const errBody = await res.text();
+    throw new Error(`OpenRouter error (${res.status}): ${errBody.slice(0, 300)}`);
+  }
+
+  const data = (await res.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  const text = data.choices?.[0]?.message?.content || '';
+  return { text };
+}
+
+async function* callOpenRouterStream(
+  contents: Array<{
+    role: 'user' | 'model';
+    parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>;
+  }>,
+  systemInstruction: string,
+  enableSearch = false
+): AsyncIterable<{ text?: string }> {
+  const apiKey = process.env.OPEN_ROUTER_API_KEY;
+  if (!apiKey) {
+    throw new Error('OPEN_ROUTER_API_KEY is not configured in .env');
+  }
+
+  const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+    { role: 'system', content: systemInstruction },
+  ];
+
+  for (const c of contents) {
+    const textPart = c.parts.map((p) => p.text || '').join('\n');
+    messages.push({
+      role: c.role === 'model' ? 'assistant' : 'user',
+      content: textPart,
+    });
+  }
+
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
+      'X-Title': 'Madhyamik AI Mitra',
+    },
+    body: JSON.stringify({
+      model: 'openrouter/free',
+      messages,
+      temperature: 0.3,
+      stream: true,
+      max_tokens: 8192,
+      plugins: enableSearch ? [{ id: 'web' }] : undefined,
+    }),
+    signal: AbortSignal.timeout(25000),
+  });
+
+  if (!res.ok || !res.body) {
+    const errBody = await res.text();
+    throw new Error(`OpenRouter streaming error (${res.status}): ${errBody.slice(0, 300)}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith(':')) continue;
+      if (trimmed === 'data: [DONE]') return;
+      if (trimmed.startsWith('data: ')) {
+        try {
+          const json = JSON.parse(trimmed.slice(6));
+          const chunk = json.choices?.[0]?.delta?.content;
+          if (chunk) {
+            yield { text: chunk };
+          }
+        } catch {
+          // ignore parsing error for chunk
+        }
+      }
+    }
+  }
+}
+
+const FAST_GEMINI_MODELS = [
+  'gemini-3.1-flash-lite',
+  'gemini-3.5-flash-lite',
+  'gemini-3.5-flash',
+];
+
 async function generateResearchStreamWithFallback(
   ai: GoogleGenAI,
   contents: Array<{
@@ -313,45 +538,52 @@ async function generateResearchStreamWithFallback(
 ): Promise<ResearchStreamResult> {
   const tools = enableSearch ? [{ googleSearch: {} }] : undefined;
 
-  // 1. Primary fast stream: gemini-3.1-flash-lite (ultra-low TTFT ~1.5s - 2.5s)
-  try {
-    const stream = await ai.models.generateContentStream({
-      model: 'gemini-3.1-flash-lite',
-      contents,
-      config: {
-        systemInstruction,
-        tools,
-      },
-    });
-    return { stream };
-  } catch (err1) {
-    console.warn('gemini-3.1-flash-lite stream error; attempting gemini-3.8-flash:', err1);
-    // 2. Fallback: gemini-3.8-flash with LOW thinking
+  for (const model of FAST_GEMINI_MODELS) {
     try {
       const stream = await ai.models.generateContentStream({
-        model: 'gemini-3.8-flash',
+        model,
         contents,
         config: {
           systemInstruction,
           tools,
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+          maxOutputTokens: 8192,
         },
       });
       return { stream };
-    } catch (err2) {
-      console.warn('gemini-3.8-flash stream error; falling back to gemini-4-hydrogen:', err2);
-      // 3. Fallback: gemini-4-hydrogen with LOW thinking
-      const stream = await ai.models.generateContentStream({
-        model: 'gemini-4-hydrogen',
-        contents,
-        config: {
-          systemInstruction,
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-        },
-      });
-      return { stream };
+    } catch (err) {
+      console.warn(`Gemini [${model}] stream warning:`, err instanceof Error ? err.message : err);
+      // If tools with search caused 429 quota exhaustion, immediately retry this model without tools
+      if (tools && isQuotaOrRateError(err)) {
+        try {
+          console.log(`Retrying Gemini [${model}] stream without search tools...`);
+          const stream = await ai.models.generateContentStream({
+            model,
+            contents,
+            config: {
+              systemInstruction,
+              maxOutputTokens: 8192,
+            },
+          });
+          return { stream };
+        } catch (retryErr) {
+          console.warn(`Gemini [${model}] stream retry warning:`, retryErr instanceof Error ? retryErr.message : retryErr);
+        }
+      }
     }
   }
+
+  // OpenRouter Fallback if configured (with web search plugin when enableSearch is true)
+  if (process.env.OPEN_ROUTER_API_KEY) {
+    try {
+      console.log('Flipping to OpenRouter stream fallback...');
+      const stream = callOpenRouterStream(contents, systemInstruction, enableSearch);
+      return { stream };
+    } catch (orErr) {
+      console.error('OpenRouter stream fallback error:', orErr);
+    }
+  }
+
+  throw new Error('All AI services are currently busy. Please wait a moment and retry.');
 }
 
 async function generateResearchWithFallback(
@@ -364,47 +596,53 @@ async function generateResearchWithFallback(
   enableSearch = false
 ): Promise<GenerateContentResponse> {
   const tools = enableSearch ? [{ googleSearch: {} }] : undefined;
-  try {
-    return await ai.models.generateContent({
-      model: 'gemini-3.1-flash-lite',
-      contents,
-      config: {
-        systemInstruction,
-        tools,
-      },
-    });
-  } catch (err) {
-    if (!isQuotaOrRateError(err)) {
-      throw err;
-    }
-    console.warn('gemini-3.1-flash-lite hit rate limit; retrying with gemini-3.8-flash.');
-    await new Promise((r) => setTimeout(r, 600));
+
+  for (const model of FAST_GEMINI_MODELS) {
     try {
       return await ai.models.generateContent({
-        model: 'gemini-3.8-flash',
+        model,
         contents,
         config: {
           systemInstruction,
           tools,
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+          maxOutputTokens: 8192,
         },
       });
-    } catch (err2) {
-      if (!isQuotaOrRateError(err2)) {
-        throw err2;
+    } catch (err) {
+      console.warn(`Gemini [${model}] generateContent warning:`, err instanceof Error ? err.message : err);
+      if (tools && isQuotaOrRateError(err)) {
+        try {
+          console.log(`Retrying Gemini [${model}] non-stream without search tools...`);
+          return await ai.models.generateContent({
+            model,
+            contents,
+            config: {
+              systemInstruction,
+              maxOutputTokens: 8192,
+            },
+          });
+        } catch (retryErr) {
+          console.warn(`Gemini [${model}] non-stream retry warning:`, retryErr instanceof Error ? retryErr.message : retryErr);
+        }
       }
-      console.warn('gemini-3.8-flash hit rate limit; falling back to gemini-4-hydrogen.');
-      await new Promise((r) => setTimeout(r, 600));
-      return await ai.models.generateContent({
-        model: 'gemini-4-hydrogen',
-        contents,
-        config: {
-          systemInstruction,
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-        },
-      });
     }
   }
+
+  // OpenRouter Fallback if configured
+  if (process.env.OPEN_ROUTER_API_KEY) {
+    try {
+      console.log('Flipping to OpenRouter non-stream fallback...');
+      const { text } = await callOpenRouter(contents, systemInstruction, enableSearch);
+      return {
+        text,
+        candidates: [{ content: { parts: [{ text }] } }],
+      } as unknown as GenerateContentResponse;
+    } catch (orErr) {
+      console.error('OpenRouter fallback error:', orErr);
+    }
+  }
+
+  throw new Error('All AI services are currently busy. Please wait a moment and retry.');
 }
 
 async function verifyYouTubeVideoAvailable(
@@ -421,7 +659,7 @@ async function verifyYouTubeVideoAvailable(
     )}&format=json`;
     const res = await fetch(oembedUrl, {
       method: 'GET',
-      signal: AbortSignal.timeout(2500),
+      signal: AbortSignal.timeout(1200),
       headers: {
         'User-Agent': 'MadhyamikAIMitra/1.0',
       },
@@ -452,7 +690,9 @@ async function verifyYouTubeVideoAvailable(
 
 function extractRawYouTubeCandidatesFromText(rawText: string): YouTubeRecommendation[] {
   const out: YouTubeRecommendation[] = [];
-  const ytMatch = rawText.match(/```json:youtube\s*([\s\S]*?)```/i);
+  const ytMatch =
+    rawText.match(/```json:youtube\s*([\s\S]*?)```/i) ||
+    rawText.match(/```json\s*(\[\s*\{[\s\S]*?"(?:url|channel)"[\s\S]*?\}\s*\])\s*```/i);
   if (ytMatch && ytMatch[1]) {
     try {
       const parsed = JSON.parse(ytMatch[1].trim());
@@ -475,155 +715,28 @@ function extractRawYouTubeCandidatesFromText(rawText: string): YouTubeRecommenda
   return out;
 }
 
-async function resolveRedirectToYouTubeUrl(rawUrl: string): Promise<string | null> {
-  if (extractYouTubeVideoId(rawUrl)) return normalizeYouTubeUrl(rawUrl);
-  try {
-    const res = await fetch(rawUrl, {
-      method: 'GET',
-      redirect: 'follow',
-      signal: AbortSignal.timeout(4000),
-      headers: { 'User-Agent': 'MadhyamikAIMitra/1.0' },
-    });
-    const finalUrl = res.url;
-    return normalizeYouTubeUrl(finalUrl);
-  } catch {
-    return null;
-  }
-}
-
-const EXCLUDED_REGIONAL_LANG_RE =
-  /\b(tamil|telugu|malayalam|kannada|marathi|gujarati|odia|oriya|punjabi|bhojpuri)\b/i;
-const WBBSE_PRIORITY_RE =
-  /(wbbse|madhyamik|class\s*10|১০|মাধ্যমিক|bengali|bangla|বাংলা)/i;
-
-async function discoverLiveYouTubeVideos(
-  query: string,
-  subject: WbbseSubject,
-  language: LanguageCode,
-  seenIds: Set<string>,
-  needed: number
-): Promise<YouTubeRecommendation[]> {
-  if (needed <= 0) return [];
-  const cleanedTopic = query
-    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 80);
-
-  const searchTerms = [
-    `WBBSE Class 10 ${subject === 'All Subjects' ? '' : subject} ${cleanedTopic} ${
-      language === 'bn' ? 'Bengali' : 'Madhyamik'
-    }`
-      .replace(/\s+/g, ' ')
-      .trim(),
-    `Madhyamik ${cleanedTopic} Bengali explanation`
-      .replace(/\s+/g, ' ')
-      .trim(),
-  ];
-
-  const found: YouTubeRecommendation[] = [];
-
-  for (const term of searchTerms) {
-    if (found.length >= needed) break;
-    try {
-      const searchRes = await fetch(
-        `https://www.youtube.com/results?search_query=${encodeURIComponent(term)}`,
-        {
-          signal: AbortSignal.timeout(5000),
-          headers: {
-            'User-Agent':
-              'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36',
-            'Accept-Language': 'en-US,en;q=0.9,bn;q=0.8',
-          },
-        }
-      );
-      if (!searchRes.ok) continue;
-      const html = await searchRes.text();
-      const rawIds = [
-        ...new Set(
-          [...html.matchAll(/"videoId":"([a-zA-Z0-9_-]{11})"/g)].map((m) => m[1])
-        ),
-      ].filter((id) => !seenIds.has(id));
-
-      const verifiedBatch = await Promise.all(
-        rawIds.slice(0, 8).map((id) =>
-          verifyYouTubeVideoAvailable({
-            title: cleanedTopic || 'WBBSE Lecture',
-            channel: 'YouTube',
-            url: `https://www.youtube.com/watch?v=${id}`,
-            reason:
-              language === 'bn'
-                ? 'মাধ্যমিক (WBBSE Class 10) টপিক বোঝার জন্য যাচাইকৃত ইউটিউব লেকচার।'
-                : 'Verified available YouTube lecture aligned with this WBBSE Class 10 topic.',
-          })
-        )
-      );
-
-      const eligible = verifiedBatch.filter((item): item is YouTubeRecommendation => {
-        if (!item) return false;
-        const combined = `${item.title} ${item.channel}`;
-        return !EXCLUDED_REGIONAL_LANG_RE.test(combined);
-      });
-
-      eligible.sort((a, b) => {
-        const aScore = WBBSE_PRIORITY_RE.test(`${a.title} ${a.channel}`) ? 1 : 0;
-        const bScore = WBBSE_PRIORITY_RE.test(`${b.title} ${b.channel}`) ? 1 : 0;
-        return bScore - aScore;
-      });
-
-      for (const item of eligible) {
-        const vid = extractYouTubeVideoId(item.url);
-        if (vid && !seenIds.has(vid)) {
-          seenIds.add(vid);
-          found.push(item);
-          if (found.length >= needed) break;
-        }
-      }
-    } catch {
-      // Ignore transient network errors during fallback discovery
-    }
-  }
-
-  return found;
-}
-
 async function resolveVerifiedYouTubeVideos(
-  ai: GoogleGenAI,
+  _ai: GoogleGenAI,
   rawText: string,
   groundingLinks: GroundingLink[],
-  query: string,
-  subject: WbbseSubject,
-  language: LanguageCode,
-  intent: string
+  _query: string,
+  _subject: WbbseSubject,
+  _language: LanguageCode,
+  _intent: string
 ): Promise<YouTubeRecommendation[]> {
   const candidates: YouTubeRecommendation[] = [
     ...extractRawYouTubeCandidatesFromText(rawText),
   ];
 
-  // Resolve any YouTube links present in Google Search grounding chunks (including vertex redirect URLs)
-  const ytGroundingCandidates = groundingLinks
-    .filter(
-      (g) =>
-        extractYouTubeVideoId(g.url) !== null ||
-        /youtube\.com|youtu\.be|youtube/i.test(`${g.title} ${g.url}`)
-    )
-    .slice(0, 4);
-
-  if (ytGroundingCandidates.length > 0) {
-    const resolvedLinks = await Promise.all(
-      ytGroundingCandidates.map(async (g) => {
-        const resolvedUrl = await resolveRedirectToYouTubeUrl(g.url);
-        return resolvedUrl
-          ? ({
-              title: g.title,
-              channel: 'YouTube',
-              url: resolvedUrl,
-            } as YouTubeRecommendation)
-          : null;
-      })
-    );
-    for (const r of resolvedLinks) {
-      if (r) candidates.push(r);
+  // Resolve direct YouTube links from search grounding chunks if any
+  for (const g of groundingLinks.slice(0, 4)) {
+    const vid = extractYouTubeVideoId(g.url);
+    if (vid) {
+      candidates.push({
+        title: g.title || 'WBBSE Concept Video',
+        channel: 'YouTube',
+        url: `https://www.youtube.com/watch?v=${vid}`,
+      });
     }
   }
 
@@ -640,100 +753,15 @@ async function resolveVerifiedYouTubeVideos(
 
   const verified: YouTubeRecommendation[] = [];
   if (deduped.length > 0) {
-    const checked = await Promise.all(deduped.slice(0, 6).map(verifyYouTubeVideoAvailable));
+    const checked = await Promise.all(
+      deduped.slice(0, 3).map(verifyYouTubeVideoAvailable)
+    );
     for (const item of checked) {
-      if (item && !EXCLUDED_REGIONAL_LANG_RE.test(`${item.title} ${item.channel}`)) {
+      if (item) {
         verified.push(item);
       }
       if (verified.length >= 2) break;
     }
-  }
-
-  // In concept mode, ensure up to 2 verified available YouTube videos via grounded lookup + live YouTube discovery
-  if (verified.length === 0 && intent === 'concept') {
-    try {
-      const searchPrompt = `Find 3 real, currently available YouTube video links (youtube.com/watch?v=...) explaining this WBBSE Class 10 (Madhyamik) topic in ${
-        language === 'bn' ? 'Bengali' : 'Bengali or English'
-      }: Subject "${subject}", Topic: "${query.slice(0, 220)}". Return ONLY a JSON array of { "title", "channel", "url", "reason" } using real watch URLs from search results.`;
-      const ytSearchRes = await ai.models.generateContent({
-        model: 'gemini-3.1-flash-lite',
-        contents: [{ role: 'user', parts: [{ text: searchPrompt }] }],
-        config: {
-          tools: [{ googleSearch: {} }],
-        },
-      });
-      const ytText = ytSearchRes.text ?? '';
-      const extraChunks =
-        ytSearchRes.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
-      const extraCandidates: YouTubeRecommendation[] = [];
-      const jsonArrMatch = ytText.match(/\[[\s\S]*\]/);
-      if (jsonArrMatch) {
-        try {
-          const arr = JSON.parse(jsonArrMatch[0]);
-          if (Array.isArray(arr)) {
-            for (const v of arr) {
-              if (v && typeof v.url === 'string') {
-                extraCandidates.push({
-                  title: String(v.title || 'YouTube Lecture'),
-                  channel: String(v.channel || 'YouTube'),
-                  url: String(v.url),
-                  reason: v.reason ? String(v.reason).slice(0, 280) : undefined,
-                });
-              }
-            }
-          }
-        } catch {
-          // ignore
-        }
-      }
-      const chunkUrls = await Promise.all(
-        extraChunks.slice(0, 4).map(async (ch) => {
-          if (!ch?.web?.uri) return null;
-          const resolved = await resolveRedirectToYouTubeUrl(ch.web.uri);
-          return resolved
-            ? ({
-                title: ch.web.title || 'YouTube Lecture',
-                channel: 'YouTube',
-                url: resolved,
-              } as YouTubeRecommendation)
-            : null;
-        })
-      );
-      for (const item of chunkUrls) {
-        if (item) extraCandidates.push(item);
-      }
-
-      const extraDeduped: YouTubeRecommendation[] = [];
-      for (const c of extraCandidates) {
-        const id = extractYouTubeVideoId(c.url);
-        if (id && !seenIds.has(id)) {
-          seenIds.add(id);
-          extraDeduped.push(c);
-        }
-      }
-      const checkedExtra = await Promise.all(
-        extraDeduped.slice(0, 5).map(verifyYouTubeVideoAvailable)
-      );
-      for (const item of checkedExtra) {
-        if (item && !EXCLUDED_REGIONAL_LANG_RE.test(`${item.title} ${item.channel}`)) {
-          verified.push(item);
-        }
-        if (verified.length >= 2) break;
-      }
-    } catch {
-      // Fall through cleanly to direct YouTube discovery
-    }
-  }
-
-  if (verified.length < 2 && intent === 'concept') {
-    const discovered = await discoverLiveYouTubeVideos(
-      query,
-      subject,
-      language,
-      seenIds,
-      2 - verified.length
-    );
-    verified.push(...discovered);
   }
 
   return verified.slice(0, 2);
@@ -806,57 +834,15 @@ async function startServer() {
         return;
       }
 
-      const ai = getAiClient();
-      const styleHint =
-        language === 'bn'
-          ? 'Calm, articulate, warm Bengali school teacher explaining a Class 10 board concept clearly in standard Kolkata Bengali with natural pauses.'
-          : 'Calm, articulate, warm Class 10 Indian school teacher explaining a concept clearly in standard English.';
-
-      const ttsResponse = await ai.models.generateContent({
-        model: 'gemini-3.8-flash-lite-tts',
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              {
-                text: normalizedSpeech,
-                speechMetadata: {
-                  style: styleHint,
-                },
-              },
-            ],
-          },
-        ],
-        config: {
-          responseModalities: ['AUDIO'],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: 'Kore' },
-            },
-          },
-        },
-      });
-
-      const audioPart = ttsResponse.candidates?.[0]?.content?.parts?.find(
-        (p) => p.inlineData?.data
-      );
-      const audioBase64 = audioPart?.inlineData?.data;
-      const mimeType = audioPart?.inlineData?.mimeType || 'audio/wav';
-
-      if (!audioBase64) {
-        res.status(502).json({ error: 'TTS model returned no audio output.' });
-        return;
-      }
-
+      // Fast, immediate speech synthesis instructions
       res.json({
-        audioBase64,
-        mimeType,
+        useBrowserSpeech: true,
         normalizedText: normalizedSpeech,
+        language: language === 'bn' ? 'bn-IN' : 'en-IN',
       });
     } catch (error) {
       console.error('TTS API error:', error);
-      const formatted = formatGeminiError(error);
-      res.status(formatted.status).json({ error: formatted.message });
+      res.status(500).json({ error: 'TTS processing failed.' });
     }
   });
 
@@ -927,14 +913,13 @@ async function startServer() {
       let response: GenerateContentResponse;
       try {
         response = await ai.models.generateContent({
-          model: 'gemini-4-hydrogen',
+          model: 'gemini-3.1-flash-lite',
           contents: [{ role: 'user', parts }],
-          config: { thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } },
         });
       } catch (err) {
-        if (!isQuotaOrRateError(err)) throw err;
+        console.warn('Document summary flash-lite failed, trying flash:', err);
         response = await ai.models.generateContent({
-          model: 'gemini-3.1-flash-lite',
+          model: 'gemini-3.5-flash',
           contents: [{ role: 'user', parts }],
         });
       }
@@ -989,7 +974,7 @@ async function startServer() {
         return;
       }
 
-      const language = detectLanguage(message);
+      const language = detectLanguage(message, subject);
       const allowProblemSolve = isProblemSolveSubject(subject);
       const effectiveSolveMode = allowProblemSolve && Boolean(solveMode);
       const intent = detectQueryIntent(
@@ -999,6 +984,7 @@ async function startServer() {
         effectiveSolveMode
       );
       const matchedPyqs = searchPyqBank(pyqBank, message, subject, 6);
+      const matchedVideos = searchVideoBank(videoBank, message, subject, language, 2);
       const safeSimpLevel = Math.max(1, Math.min(5, Number(simplificationLevel) || 1));
       const safeTargetSection =
         solveAction === 'next_section'
@@ -1015,6 +1001,7 @@ async function startServer() {
         subject,
         intent,
         matchedPyqs,
+        matchedVideos,
         attachment?.summary,
         intent === 'problem_solve'
           ? {
@@ -1131,28 +1118,6 @@ async function startServer() {
 
           let parsed = parseAssistantResponseBlocks(fullRawText);
 
-          // Defensive formatting recovery if problem_solve mode omitted its structured fence
-          if (intent === 'problem_solve' && allowProblemSolve && !parsed.problemSolve) {
-            try {
-              const repairPrompt = `Convert your response below into the required fenced \`\`\`json:problem_solve ... \`\`\` block for Section ${safeTargetSection} of the ${subject} Blackboard Teacher lesson.\n\nDraft:\n${fullRawText.slice(0, 4000)}`;
-              const repairRes = await ai.models.generateContent({
-                model: 'gemini-3.1-flash-lite',
-                contents: [...contents, { role: 'user', parts: [{ text: repairPrompt }] }],
-                config: {
-                  systemInstruction,
-                },
-              });
-              const repairedText = repairRes.text ?? '';
-              const repairedParsed = parseAssistantResponseBlocks(repairedText);
-              if (repairedParsed.problemSolve) {
-                fullRawText = repairedText;
-                parsed = repairedParsed;
-              }
-            } catch {
-              // Proceed safely without blocking request
-            }
-          }
-
           // Attach cumulative blackboard history to returned problemSolve section
           let problemSolve = parsed.problemSolve;
           if (problemSolve && allowProblemSolve) {
@@ -1174,6 +1139,14 @@ async function startServer() {
             );
             for (const v of checked) {
               if (v) youtubeVideos.push(v);
+              if (youtubeVideos.length >= 2) break;
+            }
+          }
+
+          // Guaranteed fallback from curated videoBank if model hallucinated invalid URLs or returned none
+          if (youtubeVideos.length === 0 && !problemSolve) {
+            for (const v of matchedVideos) {
+              youtubeVideos.push(v);
               if (youtubeVideos.length >= 2) break;
             }
           }
@@ -1235,28 +1208,6 @@ async function startServer() {
       let rawText = response.text ?? '';
       let parsed = parseAssistantResponseBlocks(rawText);
 
-      // Defensive formatting recovery if problem_solve mode omitted its structured fence
-      if (intent === 'problem_solve' && allowProblemSolve && !parsed.problemSolve) {
-        try {
-          const repairPrompt = `Convert your response below into the required fenced \`\`\`json:problem_solve ... \`\`\` block for Section ${safeTargetSection} of the ${subject} Blackboard Teacher lesson.\n\nDraft:\n${rawText.slice(0, 4000)}`;
-          const repairRes = await ai.models.generateContent({
-            model: 'gemini-3.1-flash-lite',
-            contents: [...contents, { role: 'user', parts: [{ text: repairPrompt }] }],
-            config: {
-              systemInstruction,
-            },
-          });
-          const repairedText = repairRes.text ?? '';
-          const repairedParsed = parseAssistantResponseBlocks(repairedText);
-          if (repairedParsed.problemSolve) {
-            rawText = repairedText;
-            parsed = repairedParsed;
-          }
-        } catch {
-          // Proceed safely without blocking request
-        }
-      }
-
       // Attach cumulative blackboard history to returned problemSolve section
       let problemSolve = parsed.problemSolve;
       if (problemSolve && allowProblemSolve) {
@@ -1293,6 +1244,14 @@ async function startServer() {
         );
         for (const v of checked) {
           if (v) youtubeVideos.push(v);
+          if (youtubeVideos.length >= 2) break;
+        }
+      }
+
+      // Guaranteed fallback from curated videoBank if model hallucinated invalid URLs or returned none
+      if (youtubeVideos.length === 0 && !problemSolve) {
+        for (const v of matchedVideos) {
+          youtubeVideos.push(v);
           if (youtubeVideos.length >= 2) break;
         }
       }

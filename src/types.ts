@@ -51,6 +51,20 @@ export interface YouTubeRecommendation {
   verified?: boolean;
 }
 
+export interface WbbseVideoEntry {
+  id: string;
+  subject: WbbseSubject;
+  chapter: string;
+  chapterBn: string;
+  keywords: string[];
+  title: string;
+  channel: string;
+  url: string;
+  reasonBn: string;
+  reasonEn: string;
+  thumbnailUrl?: string;
+}
+
 export interface GroundingLink {
   title: string;
   url: string;

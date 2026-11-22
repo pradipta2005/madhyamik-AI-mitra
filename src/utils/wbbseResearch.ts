@@ -15,6 +15,7 @@ import type {
   StudySession,
   SuggestedPyqItem,
   WbbseSubject,
+  WbbseVideoEntry,
   YouTubeRecommendation,
 } from '../types.ts';
 
@@ -74,6 +75,8 @@ const BANGLISH_MARKERS = new Set([
   'din',
   'bolo',
   'sajeshon',
+  'suggestion',
+  'suggession',
   'guruttopurno',
   'guruttapurno',
   'banglay',
@@ -85,6 +88,7 @@ const BANGLISH_MARKERS = new Set([
   'kon',
   'konta',
   'gulo',
+  'gulor',
   'niye',
   'theke',
   'jonyo',
@@ -96,15 +100,50 @@ const BANGLISH_MARKERS = new Set([
   'odhyay',
   'upopaddo',
   'shomoy',
+  'somoy',
+  'koni',
+  'bohurupi',
+  'gyanchokkhu',
+  'er',
+  'te',
+  'ye',
+  'diye',
+  'holo',
+  'hobe',
+  'ache',
+  'achhe',
+  'ki',
+  'karon',
+  'golpo',
+  'kobita',
+  'natok',
+  'prabandha',
+  'important',
+  'mcq',
+  'mcqs',
+  'saq',
+  'laq',
+  'bhalo',
+  'khub',
+  'sob',
+  'shob',
 ]);
 
-export function detectLanguage(text: string): LanguageCode {
+export function detectLanguage(text: string, subject?: WbbseSubject): LanguageCode {
   if (!text || !text.trim()) return 'en';
   if (/[\u0980-\u09FF]/.test(text)) {
     return 'bn';
   }
-  const tokens = text
-    .toLowerCase()
+  const lower = text.toLowerCase();
+  if (lower.includes('in english') || lower.includes('english version')) {
+    return 'en';
+  }
+  if (subject === 'Bengali') {
+    // Bengali subject in WBBSE Class 10 is 1st Language Bengali.
+    return 'bn';
+  }
+
+  const tokens = lower
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)
     .filter(Boolean);
@@ -121,14 +160,146 @@ export function detectLanguage(text: string): LanguageCode {
   if (
     banglishHits === 1 &&
     tokens.some((t) =>
-      ['bojhao', 'bojhhao', 'bhashay', 'vasay', 'proshno', 'prosno', 'kivabe', 'amake', 'banglay'].includes(
-        t
-      )
+      [
+        'bojhao',
+        'bojhhao',
+        'bhashay',
+        'vasay',
+        'proshno',
+        'prosno',
+        'kivabe',
+        'amake',
+        'banglay',
+        'koni',
+        'er',
+        'theke',
+        'dao',
+        'sajeshon',
+      ].includes(t)
     )
   ) {
     return 'bn';
   }
   return 'en';
+}
+
+export function deduplicateConsecutiveWords(text: string): string {
+  if (!text || typeof text !== 'string') return '';
+  let words = text.trim().split(/\s+/);
+  if (words.length <= 1) return text.trim();
+
+  // Helper to compare words case-insensitively
+  const eq = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+
+  // Run multiple passes for n-gram deduplication (from n=10 down to 1)
+  let changed = true;
+  let pass = 0;
+  while (changed && pass < 5) {
+    changed = false;
+    pass++;
+    const maxN = Math.min(10, Math.floor(words.length / 2));
+    for (let n = maxN; n >= 1; n--) {
+      const nextWords: string[] = [];
+      let i = 0;
+      while (i < words.length) {
+        if (i + 2 * n <= words.length) {
+          let match = true;
+          for (let j = 0; j < n; j++) {
+            if (!eq(words[i + j], words[i + n + j])) {
+              match = false;
+              break;
+            }
+          }
+          if (match) {
+            changed = true;
+            // Keep first block of length n
+            for (let j = 0; j < n; j++) nextWords.push(words[i + j]);
+            i += 2 * n;
+            // Skip any further consecutive identical blocks
+            while (i + n <= words.length) {
+              let furtherMatch = true;
+              for (let j = 0; j < n; j++) {
+                if (!eq(words[i + j], nextWords[nextWords.length - n + j])) {
+                  furtherMatch = false;
+                  break;
+                }
+              }
+              if (furtherMatch) {
+                i += n;
+              } else {
+                break;
+              }
+            }
+            continue;
+          }
+        }
+        nextWords.push(words[i]);
+        i++;
+      }
+      words = nextWords;
+    }
+  }
+
+  return words.join(' ');
+}
+
+export function cleanVoiceRecognitionText(raw: string, lang: LanguageCode): string {
+  if (!raw || typeof raw !== 'string') return '';
+  let text = raw.trim();
+
+  if (lang === 'bn') {
+    const bnReplacements: [RegExp, string][] = [
+      [/(?<![\p{L}\p{N}])মাদ্যমিক(?![\p{L}\p{N}])/gui, 'মাধ্যমিক'],
+      [/(?<![\p{L}\p{N}])উপপাদ(?![\p{L}\p{N}])/gui, 'উপপাদ্য'],
+      [/(?<![\p{L}\p{N}])দ্বিঘাত সমিকরন(?![\p{L}\p{N}])/gui, 'দ্বিঘাত সমীকরণ'],
+      [/(?<![\p{L}\p{N}])আলোক প্রতিসরণ(?![\p{L}\p{N}])/gui, 'আলোর প্রতিসরণ'],
+      [/(?<![\p{L}\p{N}])চলতড়িত(?![\p{L}\p{N}])/gui, 'চলতড়িৎ'],
+      [/(?<![\p{L}\p{N}])বহিরূপী(?![\p{L}\p{N}])/gui, 'বহুরূপী'],
+      [/(?<![\p{L}\p{N}])সাওতাল(?![\p{L}\p{N}])/gui, 'সাঁওতাল'],
+      [/(?<![\p{L}\p{N}])জ্ঞান চক্ষু(?![\p{L}\p{N}])/gui, 'জ্ঞানচক্ষু'],
+      [/(?<![\p{L}\p{N}])ত্রিকোনমিতি(?![\p{L}\p{N}])/gui, 'ত্রিকোণমিতি'],
+      [/(?<![\p{L}\p{N}])রাশি বিজ্ঞান(?![\p{L}\p{N}])/gui, 'রাশিবিজ্ঞান'],
+      [/(?<![\p{L}\p{N}])পরি মিতি(?![\p{L}\p{N}])/gui, 'পরিমিতি'],
+      [/(?<![\p{L}\p{N}])বয়েলের সূত্র(?![\p{L}\p{N}])/gui, 'বয়েলের সূত্র'],
+      [/(?<![\p{L}\p{N}])চার্লসের সূত্র(?![\p{L}\p{N}])/gui, 'চার্লসের সূত্র'],
+      [/(?<![\p{L}\p{N}])ওহমের সূত্র(?![\p{L}\p{N}])/gui, 'ওহমের সূত্র'],
+      [/(?<![\p{L}\p{N}])টেস্ট পেপার(?![\p{L}\p{N}])/gui, 'টেস্ট পেপার'],
+      [/(?<![\p{L}\p{N}])পি ওয়াই কিউ(?![\p{L}\p{N}])/gui, 'PYQ'],
+      [/(?<![\p{L}\p{N}])এ বি টি এ(?![\p{L}\p{N}])/gui, 'ABTA'],
+      [/(?<![\p{L}\p{N}])ডাব্লিউ বি টি এ(?![\p{L}\p{N}])/gui, 'WBTA'],
+      [/(?<![\p{L}\p{N}])ডব্লিউ বি বি এস ই(?![\p{L}\p{N}])/gui, 'WBBSE'],
+      [/(?<![\p{L}\p{N}])ইম্পরট্যান্ট(?![\p{L}\p{N}])/gui, 'গুরুত্বপূর্ণ'],
+      [/(?<![\p{L}\p{N}])ইম্পর্টেন্ট(?![\p{L}\p{N}])/gui, 'গুরুত্বপূর্ণ'],
+      [/(?<![\p{L}\p{N}])কোশ্চেনস?(?![\p{L}\p{N}])/gui, 'প্রশ্ন'],
+      [/(?<![\p{L}\p{N}])কোয়েশ্চেনস?(?![\p{L}\p{N}])/gui, 'প্রশ্ন'],
+      [/(?<![\p{L}\p{N}])সাজেসন(?![\p{L}\p{N}])/gui, 'সাজেশন'],
+      [/(?<![\p{L}\p{N}])bangla\s+important\s+questions?(?![\p{L}\p{N}])/gui, 'বাংলা গুরুত্বপূর্ণ প্রশ্ন'],
+      [/(?<![\p{L}\p{N}])important\s+questions?(?![\p{L}\p{N}])/gui, 'গুরুত্বপূর্ণ প্রশ্ন'],
+    ];
+    for (const [re, rep] of bnReplacements) {
+      text = text.replace(re, rep);
+    }
+  } else {
+    const enReplacements: [RegExp, string][] = [
+      [/\bmadhyamic\b/gi, 'Madhyamik'],
+      [/\bmadhamik\b/gi, 'Madhyamik'],
+      [/\bwbbse\b/gi, 'WBBSE'],
+      [/\bpyq\b/gi, 'PYQ'],
+      [/\bpyqs\b/gi, 'PYQs'],
+      [/\babta\b/gi, 'ABTA'],
+      [/\bwbta\b/gi, 'WBTA'],
+      [/\bohms? law\b/gi, "Ohm's law"],
+      [/\bboyles? law\b/gi, "Boyle's law"],
+      [/\bcharles? law\b/gi, "Charles's law"],
+      [/\bsnells? law\b/gi, "Snell's law"],
+    ];
+    for (const [re, rep] of enReplacements) {
+      text = text.replace(re, rep);
+    }
+  }
+
+  const collapsed = text.replace(/\s+/g, ' ');
+  return deduplicateConsecutiveWords(collapsed);
 }
 
 export function isSupportedDocumentType(fileName: string, mimeType = ''): boolean {
@@ -305,6 +476,7 @@ export function searchPyqBank(
       entry.questionEn,
       entry.questionBn,
       ...entry.keywords,
+      ...(entry.testPaperRefs || []),
     ]
       .join(' ')
       .toLowerCase();
@@ -315,6 +487,13 @@ export function searchPyqBank(
       }
       if (entry.keywords.some((kw) => kw.toLowerCase() === token)) {
         score += 4;
+      }
+      if (
+        (token === 'abta' || token === 'wbta' || token === 'testpaper') &&
+        entry.testPaperRefs &&
+        entry.testPaperRefs.length > 0
+      ) {
+        score += 3;
       }
     }
 
@@ -327,6 +506,71 @@ export function searchPyqBank(
 
   scored.sort((a, b) => b.score - a.score);
   return scored.slice(0, limit).map((s) => s.entry);
+}
+
+export function searchVideoBank(
+  entries: WbbseVideoEntry[],
+  query: string,
+  subject: WbbseSubject = 'All Subjects',
+  language: LanguageCode = 'bn',
+  limit = 2
+): YouTubeRecommendation[] {
+  if (!entries || entries.length === 0) return [];
+
+  const pool =
+    subject === 'All Subjects'
+      ? entries
+      : entries.filter((e) => e.subject === subject);
+
+  const finalPool = pool.length > 0 ? pool : entries;
+  const normalizedQuery = query.toLowerCase().trim();
+  const queryTokens = normalizedQuery
+    .split(/[\s,?.!।;:()\-]+/)
+    .filter((t) => t.length >= 2);
+
+  const scored = finalPool.map((entry) => {
+    let score = 0;
+    const haystack = [
+      entry.subject,
+      entry.chapter,
+      entry.chapterBn,
+      entry.title,
+      ...entry.keywords,
+    ]
+      .join(' ')
+      .toLowerCase();
+
+    for (const token of queryTokens) {
+      if (haystack.includes(token)) {
+        score += 3;
+      }
+      if (entry.keywords.some((kw) => kw.toLowerCase() === token)) {
+        score += 5;
+      }
+    }
+
+    if (entry.subject === subject) {
+      score += 2;
+    }
+
+    return { entry, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  const selected = (scored[0]?.score > 0 ? scored.filter((s) => s.score > 0) : scored)
+    .slice(0, limit)
+    .map((s) => s.entry);
+
+  return selected.map((e) => ({
+    title: e.title,
+    channel: e.channel,
+    url: e.url,
+    reason: language === 'bn' ? e.reasonBn : e.reasonEn,
+    thumbnailUrl:
+      e.thumbnailUrl ||
+      `https://i.ytimg.com/vi/${extractYouTubeVideoId(e.url)}/hqdefault.jpg`,
+    verified: true,
+  }));
 }
 
 const VALID_IMPORTANCE = new Set<ImportanceLevel>([
@@ -346,7 +590,9 @@ export function parseAssistantResponseBlocks(rawText: string): {
   let youtubeVideos: YouTubeRecommendation[] = [];
   let problemSolve: ProblemSolveData | undefined;
 
-  const pyqMatch = cleanText.match(/```json:pyq\s*([\s\S]*?)```/i);
+  const pyqMatch =
+    cleanText.match(/```json:pyq\s*([\s\S]*?)```/i) ||
+    cleanText.match(/```json\s*(\[\s*\{[\s\S]*?"question"[\s\S]*?\}\s*\])\s*```/i);
   if (pyqMatch && pyqMatch[1]) {
     try {
       const parsed = JSON.parse(pyqMatch[1].trim());
@@ -524,7 +770,9 @@ function normalizeBlackboardLines(raw: unknown): BlackboardLine[] {
     cleanText = cleanText.replace(solveMatch[0], '');
   }
 
-  const ytMatch = cleanText.match(/```json:youtube\s*([\s\S]*?)```/i);
+  const ytMatch =
+    cleanText.match(/```json:youtube\s*([\s\S]*?)```/i) ||
+    cleanText.match(/```json\s*(\[\s*\{[\s\S]*?"(?:url|channel|videoId)"[\s\S]*?\}\s*\])\s*```/i);
   if (ytMatch && ytMatch[1]) {
     try {
       const parsed = JSON.parse(ytMatch[1].trim());
@@ -552,8 +800,29 @@ function normalizeBlackboardLines(raw: unknown): BlackboardLine[] {
     cleanText = cleanText.replace(ytMatch[0], '');
   }
 
+  let finalCleanText = cleanText.trim();
+  if (youtubeVideos.length === 0) {
+    finalCleanText = finalCleanText
+      .replace(
+        /(?:^|\n)#{1,4}\s*(?:ইউটিউব|ইউটিউব ভিডিও|ভিডিও লেকচার|YouTube|Recommended Videos?)[^\n]*\n*(?:সহজভাবে বোঝার জন্য নিচের ভিডিওগুলো দেখতে পারো[^\n]*\n*|নিচের ভিডিও[^\n]*\n*|You can watch the videos below[^\n]*\n*)?/gi,
+        '\n'
+      )
+      .trim();
+  }
+  if (!finalCleanText) {
+    if (problemSolve) {
+      finalCleanText =
+        problemSolve.teacherSpeech ||
+        problemSolve.sectionTitle ||
+        'নিচে ব্ল্যাকবোর্ডে প্রতিটি ধাপ লক্ষ্য করো:';
+    } else if (pyqItems.length > 0) {
+      finalCleanText =
+        'বিগত বছরের মাধ্যমিক ও টেস্ট পেপার (ABTA/WBTA) বিশ্লেষণের গুরুত্বপূর্ণ প্রশ্নাবলি নিচে দেওয়া হলো:';
+    }
+  }
+
   return {
-    cleanText: cleanText.trim(),
+    cleanText: finalCleanText,
     pyqItems,
     youtubeVideos,
     problemSolve,

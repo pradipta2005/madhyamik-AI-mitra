@@ -252,34 +252,42 @@ export function ProblemSolveCard({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: rawSpeech, language }),
       });
-      if (!res.ok) {
-        throw new Error('Server TTS unavailable');
-      }
-      const payload = (await res.json()) as {
-        audioBase64?: string;
-        mimeType?: string;
-      };
-      if (!payload.audioBase64) {
-        throw new Error('Missing audio data');
-      }
+      if (res.ok) {
+        const payload = (await res.json()) as {
+          audioBase64?: string;
+          mimeType?: string;
+          useBrowserSpeech?: boolean;
+          normalizedText?: string;
+        };
 
-      const binary = atob(payload.audioBase64);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
+        if (payload.audioBase64) {
+          const binary = atob(payload.audioBase64);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+          }
+          const blob = new Blob([bytes], { type: payload.mimeType || 'audio/wav' });
+          const objectUrl = URL.createObjectURL(blob);
+          cachedAudioUrlRef.current[cacheKey] = objectUrl;
+          await playAudioUrl(objectUrl);
+          return;
+        }
+
+        if (payload.useBrowserSpeech || payload.normalizedText) {
+          const spoken = payload.normalizedText || formatTeacherSpeechForAudio(rawSpeech, language);
+          playBrowserSpeechFallback(spoken);
+          return;
+        }
       }
-      const blob = new Blob([bytes], { type: payload.mimeType || 'audio/wav' });
-      const objectUrl = URL.createObjectURL(blob);
-      cachedAudioUrlRef.current[cacheKey] = objectUrl;
-      await playAudioUrl(objectUrl);
+      throw new Error('TTS fallback');
     } catch {
       const normalized = formatTeacherSpeechForAudio(rawSpeech, language);
       const started = playBrowserSpeechFallback(normalized);
       if (!started) {
         setVoiceError(
           language === 'bn'
-            ? 'এই মুহূর্তে ভয়েস প্লেব্যাক চালু করা যায়নি।'
-            : 'Unable to play teacher voice right now.'
+            ? 'এই ব্রাউজারে ভয়েস প্লেব্যাক সমর্থিত নয়।'
+            : 'Browser speech playback is not supported.'
         );
       }
     } finally {
