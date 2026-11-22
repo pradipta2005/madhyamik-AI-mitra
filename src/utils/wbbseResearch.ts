@@ -573,13 +573,106 @@ export function searchVideoBank(
   }));
 }
 
+export function shouldRecommendVideos(query: string): boolean {
+  if (!query || typeof query !== 'string') return false;
+  const q = query.toLowerCase();
+
+  // Explicit requests for video/tutorial/lecture
+  const explicitKeywords = [
+    'video',
+    'vedio',
+    'videos',
+    'youtube',
+    'lecture',
+    'tutorial',
+    'animation',
+    'ভিডিও',
+    'ভিডিয়ো',
+    'লেকচার',
+    'টিউটোরিয়াল',
+    'টিউটোরিয়াল',
+  ];
+  if (explicitKeywords.some((k) => q.includes(k))) return true;
+
+  // Requests indicating difficulty in understanding, confusion, or asking for simple explanation
+  const difficultyKeywords = [
+    'understand',
+    'understanding',
+    "don't get",
+    'cant understand',
+    "can't understand",
+    'unable to understand',
+    'confused',
+    'confusion',
+    'struggling',
+    'difficult to grasp',
+    'hard to understand',
+    'explain simply',
+    'explain easily',
+    'visualize',
+    'visualise',
+    'কীভাবে কাজ করে',
+    'সহজ ভাষায় বোঝাও',
+    'সহজ ভাষায় বোঝাও',
+    'সহজ করে বোঝাও',
+    'সহজ করে বুঝিয়ে দাও',
+    'সহজ ভাষায়',
+    'সহজ ভাষায়',
+    'বুঝতে পারছি না',
+    'বুঝতে পারলাম না',
+    'বুঝিয়ে দাও',
+    'বুঝিয়ে দাও',
+    'অসুবিধা হচ্ছে',
+    'bujhte parchi na',
+    'sohoj bhashay',
+  ];
+  return difficultyKeywords.some((k) => q.includes(k));
+}
+
 const VALID_IMPORTANCE = new Set<ImportanceLevel>([
   'High Probability',
   'Repeated Trend',
   'Concept Builder',
 ]);
 
-export function parseAssistantResponseBlocks(rawText: string): {
+const BENGALI_ONLY_KEYWORDS = [
+  'koni',
+  'কোনি',
+  'gyanchokkhu',
+  'জ্ঞানচক্ষু',
+  'বহুরূপী',
+  'bohurupi',
+  'পথের দাবী',
+  'অদল বদল',
+  'নদীর বিদ্রোহ',
+  'সিরাজউদ্দৌলা',
+  'আফ্রিকা',
+  'অসুখী একজন',
+  'প্রলয়োল্লাস',
+  'অভিষেক',
+  'মতি নন্দী',
+  'moti nandi',
+  'ক্ষিতীশ',
+  'kshitis',
+];
+
+const ENGLISH_ONLY_KEYWORDS = [
+  "father's help",
+  'passing away of bapu',
+  'bapu',
+  'fable',
+  'sea fever',
+  'the cat',
+  'runaway kite',
+  'the snail',
+  'r.k. narayan',
+];
+
+export function parseAssistantResponseBlocks(
+  rawText: string,
+  currentSubject?: WbbseSubject,
+  allowVideos = true
+): {
   cleanText: string;
   pyqItems: SuggestedPyqItem[];
   youtubeVideos: YouTubeRecommendation[];
@@ -622,6 +715,19 @@ export function parseAssistantResponseBlocks(rawText: string): {
             chapter: item.chapter ? String(item.chapter).slice(0, 120) : undefined,
             subject: item.subject ? String(item.subject).slice(0, 80) : undefined,
           }));
+
+        // Strict cross-subject card sanitation
+        if (currentSubject === 'English') {
+          pyqItems = pyqItems.filter((item) => {
+            const combined = `${item.chapter || ''} ${item.question || ''}`.toLowerCase();
+            return !BENGALI_ONLY_KEYWORDS.some((kw) => combined.includes(kw));
+          });
+        } else if (currentSubject === 'Bengali') {
+          pyqItems = pyqItems.filter((item) => {
+            const combined = `${item.chapter || ''} ${item.question || ''}`.toLowerCase();
+            return !ENGLISH_ONLY_KEYWORDS.some((kw) => combined.includes(kw));
+          });
+        }
       }
     } catch {
       // Ignore malformed JSON fence safely
@@ -776,7 +882,7 @@ function normalizeBlackboardLines(raw: unknown): BlackboardLine[] {
   if (ytMatch && ytMatch[1]) {
     try {
       const parsed = JSON.parse(ytMatch[1].trim());
-      if (Array.isArray(parsed)) {
+      if (Array.isArray(parsed) && allowVideos) {
         youtubeVideos = parsed
           .filter(
             (v) =>
@@ -800,11 +906,15 @@ function normalizeBlackboardLines(raw: unknown): BlackboardLine[] {
     cleanText = cleanText.replace(ytMatch[0], '');
   }
 
+  if (!allowVideos) {
+    youtubeVideos = [];
+  }
+
   let finalCleanText = cleanText.trim();
   if (youtubeVideos.length === 0) {
     finalCleanText = finalCleanText
       .replace(
-        /(?:^|\n)#{1,4}\s*(?:ইউটিউব|ইউটিউব ভিডিও|ভিডিও লেকচার|YouTube|Recommended Videos?)[^\n]*\n*(?:সহজভাবে বোঝার জন্য নিচের ভিডিওগুলো দেখতে পারো[^\n]*\n*|নিচের ভিডিও[^\n]*\n*|You can watch the videos below[^\n]*\n*)?/gi,
+        /(?:^|\n)#{1,4}\s*(?:ইউটিউব|ইউটিউব ভিডিও|ভিডিও লেকচার|YouTube|Recommended Videos?|Recommended Video Lectures?)[^\n]*\n*(?:সহজভাবে বোঝার জন্য নিচের ভিডিওগুলো দেখতে পারো[^\n]*\n*|নিচের ভিডিও[^\n]*\n*|You can watch the videos below[^\n]*\n*|Watch the recommended lecture[^\n]*\n*)?/gi,
         '\n'
       )
       .trim();

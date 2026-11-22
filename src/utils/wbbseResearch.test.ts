@@ -22,6 +22,7 @@ import {
   sanitizeMessageForStorage,
   searchPyqBank,
   searchVideoBank,
+  shouldRecommendVideos,
   stripInternalFences,
 } from './wbbseResearch.ts';
 
@@ -443,6 +444,45 @@ test('parseAssistantResponseBlocks removes dangling empty YouTube tutorial headi
   assert.equal(parsed.cleanText.includes('ইউটিউব ভিডিও টিউটোরিয়াল'), false);
   assert.equal(parsed.cleanText.includes('সহজভাবে বোঝার জন্য নিচের ভিডিওগুলো দেখতে পারো'), false);
   assert.ok(parsed.cleanText.includes('টিপস: পরীক্ষার খাতায়'));
+});
+
+test('shouldRecommendVideos only triggers when video is requested or student expresses difficulty', () => {
+  assert.equal(shouldRecommendVideos('What are the most important chapters for this year and why?'), false);
+  assert.equal(shouldRecommendVideos('কোনি গল্প এর গুরুত্বপূর্ণ প্রশ্ন গুলো দাও'), false);
+  assert.equal(shouldRecommendVideos('Father Help unit 1 summary'), false);
+  assert.equal(shouldRecommendVideos('ভৌত বিজ্ঞান আলোর প্রতিসরণ সহজ ভাষায় বোঝাও'), true);
+  assert.equal(shouldRecommendVideos('I am not understanding refraction of light'), true);
+  assert.equal(shouldRecommendVideos('Give me a youtube video for electric current'), true);
+  assert.equal(shouldRecommendVideos('আলোর প্রতিসরণ বুঝতে পারছি না'), true);
+});
+
+test('parseAssistantResponseBlocks sanitizes cross-subject hallucinations (Koni in English)', () => {
+  const mixedOutput = `English syllabus suggestions for 2026.
+
+\`\`\`json:pyq
+[
+  {
+    "question": "How did Swami's father react to his excuse?",
+    "chapter": "Father's Help",
+    "subject": "English",
+    "years": [2018, 2022],
+    "marks": "2 Marks"
+  },
+  {
+    "question": "How did Koni evolve through Kshitis's training?",
+    "chapter": "Koni",
+    "subject": "English",
+    "years": [2017, 2020],
+    "marks": "5 Marks"
+  }
+]
+\`\`\`
+`;
+
+  const sanitized = parseAssistantResponseBlocks(mixedOutput, 'English', false);
+  assert.equal(sanitized.pyqItems.length, 1);
+  assert.equal(sanitized.pyqItems[0].chapter, "Father's Help");
+  assert.equal(sanitized.youtubeVideos.length, 0);
 });
 
 
