@@ -439,9 +439,10 @@ interface ResearchStreamResult {
 }
 
 const OPENROUTER_CANDIDATE_MODELS = [
-  'openrouter/auto',
-  'google/gemini-3.5-flash-lite',
   'meta-llama/llama-3.3-70b-instruct',
+  'meta-llama/llama-3.1-8b-instruct',
+  'mistralai/mistral-small-24b-instruct-2501',
+  'openrouter/auto',
 ];
 
 async function callOpenRouter(
@@ -513,14 +514,16 @@ async function callOpenRouter(
   throw new Error(`OpenRouter failed: ${lastErr}`);
 }
 
-async function* callOpenRouterStream(
+async function createOpenRouterStream(
   contents: Array<{
     role: 'user' | 'model';
     parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>;
   }>,
   systemInstruction: string,
-  enableSearch = false
-): AsyncIterable<{ text?: string }> {
+  enableSearch = false,
+  timeoutPerModelMs = 8000,
+  maxTokens = 1200
+): Promise<AsyncIterable<{ text?: string }>> {
   const apiKey = process.env.OPEN_ROUTER_API_KEY;
   if (!apiKey) {
     throw new Error('OPEN_ROUTER_API_KEY is not configured in .env');
@@ -539,7 +542,7 @@ async function* callOpenRouterStream(
   }
 
   let streamRes: Response | null = null;
-  let activeModel = OPENROUTER_CANDIDATE_MODELS[0];
+  let activeModel = '';
 
   for (const candidateModel of OPENROUTER_CANDIDATE_MODELS) {
     try {
@@ -556,10 +559,10 @@ async function* callOpenRouterStream(
           messages,
           temperature: 0.3,
           stream: true,
-          max_tokens: 3000,
+          max_tokens: maxTokens,
           plugins: enableSearch ? [{ id: 'web' }] : undefined,
         }),
-        signal: AbortSignal.timeout(25000),
+        signal: AbortSignal.timeout(timeoutPerModelMs),
       });
 
       if (res.ok && res.body) {
@@ -581,31 +584,49 @@ async function* callOpenRouterStream(
   console.log(`Streaming research via OpenRouter [${activeModel}]...`);
   const reader = streamRes.body.getReader();
   const decoder = new TextDecoder('utf-8');
-  let buffer = '';
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() ?? '';
+  async function* streamGenerator(): AsyncGenerator<{ text?: string }> {
+    let buffer = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
 
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith(':')) continue;
-      if (trimmed === 'data: [DONE]') return;
-      if (trimmed.startsWith('data: ')) {
-        try {
-          const json = JSON.parse(trimmed.slice(6));
-          const chunk = json.choices?.[0]?.delta?.content;
-          if (chunk) {
-            yield { text: chunk };
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith(':')) continue;
+        if (trimmed === 'data: [DONE]') return;
+        if (trimmed.startsWith('data: ')) {
+          try {
+            const json = JSON.parse(trimmed.slice(6));
+            const chunk = json.choices?.[0]?.delta?.content;
+            if (chunk) {
+              yield { text: chunk };
+            }
+          } catch {
+            // ignore parsing error for chunk
           }
-        } catch {
-          // ignore parsing error for chunk
         }
       }
     }
+  }
+
+  return streamGenerator();
+}
+
+async function* callOpenRouterStream(
+  contents: Array<{
+    role: 'user' | 'model';
+    parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>;
+  }>,
+  systemInstruction: string,
+  enableSearch = false
+): AsyncIterable<{ text?: string }> {
+  const stream = await createOpenRouterStream(contents, systemInstruction, enableSearch);
+  for await (const chunk of stream) {
+    yield chunk;
   }
 }
 
@@ -664,7 +685,7 @@ async function generateResearchStreamWithFallback(
   if (process.env.OPEN_ROUTER_API_KEY) {
     try {
       console.log('Flipping to OpenRouter stream fallback...');
-      const stream = callOpenRouterStream(contents, systemInstruction, enableSearch);
+      const stream = await createOpenRouterStream(contents, systemInstruction, enableSearch);
       return { stream };
     } catch (orErr) {
       console.error('OpenRouter stream fallback error:', orErr);
@@ -958,6 +979,17 @@ async function startServer() {
       const cleanMessage = message.trim();
       const detectedLang = language === 'bn' ? 'bn' : 'en';
 
+      const pyqMatches = searchPyqBank(pyqBank, cleanMessage, subject, 3);
+      const pyqContext =
+        pyqMatches.length > 0
+          ? `\nWBBSE BOARD & TEST PAPER KNOWLEDGE GROUNDING:\n${pyqMatches
+              .map(
+                (p, idx) =>
+                  `[Verified Point ${idx + 1}] Chapter: ${p.chapterBn || p.chapter} | Question: ${p.questionBn || p.questionEn} | Trend: ${p.trendNoteBn || p.trendNoteEn || ''} | Years: ${(p.examYears || []).join(', ')}`
+              )
+              .join('\n')}`
+          : '';
+
       const systemInstruction = `You are "Madhyamik AI Mitra", an expert, deeply caring, and authoritative oral viva examiner and concept tutor for West Bengal Board of Secondary Education (WBBSE) Class 10 (Madhyamik Pariksha).
 CURRENT SUBJECT: ${subject}
 LANGUAGE DIRECTIVE:
@@ -983,7 +1015,8 @@ ADAPTIVE ORAL PREPARATION & VIVA EXAMINATION RULES:
 3. STRICT SUBJECT BOUNDARIES:
    - Strictly stay within ${subject}.
    - In English: NO Koni, NO Bengali stories, NO 5-mark literature questions.
-   - In Bengali: Keep all characters, quotes, and references strictly in authentic Bengali.`;
+   - In Bengali: Keep all characters, quotes, and references strictly in authentic Bengali.
+${pyqContext}`;
 
       const contents: Array<{
         role: 'user' | 'model';
@@ -1028,7 +1061,7 @@ ADAPTIVE ORAL PREPARATION & VIVA EXAMINATION RULES:
         if (preferOpenRouter && process.env.OPEN_ROUTER_API_KEY) {
           try {
             console.log('Live Voice Prep: Streaming via OpenRouter directly...');
-            const orStream = callOpenRouterStream(contents, systemInstruction, false);
+            const orStream = await createOpenRouterStream(contents, systemInstruction, false, 7000, 1200);
             streamResult = { stream: orStream };
           } catch (orErr) {
             console.warn('Live voice OpenRouter direct stream failed, trying Gemini:', orErr);

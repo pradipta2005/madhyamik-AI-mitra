@@ -88,21 +88,31 @@ function base64Pcm16ToFloat32(base64: string): Float32Array {
  */
 function splitCompletedSentences(buffer: string): { sentences: string[]; remainder: string } {
   const regex = /([^।?!.\n]+[।?!.\n]+)/g;
-  const matches = buffer.match(regex);
-  if (!matches) {
-    // If buffer is getting long without terminal punctuation, split at a natural pause (comma or semicolon)
-    if (buffer.length > 130) {
-      const commaMatch = buffer.match(/^([^,;]+[,;]+)\s*(.*)$/);
-      if (commaMatch && commaMatch[1]) {
-        return { sentences: [commaMatch[1].trim()], remainder: commaMatch[2].trimStart() };
-      }
+  let lastIndex = 0;
+  const sentences: string[] = [];
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(buffer)) !== null) {
+    const text = match[1].trim();
+    if (text) {
+      sentences.push(text);
     }
-    return { sentences: [], remainder: buffer };
+    lastIndex = regex.lastIndex;
   }
-  const sentences = matches.map((s) => s.trim()).filter((s) => s.length > 0);
-  const matchedLength = matches.join('').length;
-  const remainder = buffer.slice(matchedLength).trimStart();
-  return { sentences, remainder };
+
+  if (sentences.length > 0) {
+    return { sentences, remainder: buffer.slice(lastIndex).trimStart() };
+  }
+
+  // If buffer is getting long without terminal punctuation, split at a natural pause (comma or semicolon)
+  if (buffer.length > 110) {
+    const commaMatch = buffer.match(/^([^,;]+[,;]+)\s*(.*)$/);
+    if (commaMatch && commaMatch[1]) {
+      return { sentences: [commaMatch[1].trim()], remainder: commaMatch[2].trimStart() };
+    }
+  }
+
+  return { sentences, remainder: buffer };
 }
 
 export function LiveVoiceModal({
@@ -119,6 +129,7 @@ export function LiveVoiceModal({
   const [interimText, setInterimText] = useState('');
   const [isTeacherSpeaking, setIsTeacherSpeaking] = useState(false);
   const [isProcessingTurn, setIsProcessingTurn] = useState(false);
+  const isProcessingTurnRef = useRef(false);
 
   const wsRef = useRef<WebSocket | null>(null);
   const inputCtxRef = useRef<AudioContext | null>(null);
@@ -224,15 +235,25 @@ export function LiveVoiceModal({
       utterance.voice = matchingVoice;
     }
 
+    let safetyTimer: number | null = null;
     const onUtteranceComplete = () => {
+      if (safetyTimer) {
+        window.clearTimeout(safetyTimer);
+        safetyTimer = null;
+      }
       activeUtterancesRef.current.delete(utterance);
       isSpeakingRef.current = false;
       if (audioQueueRef.current.length > 0) {
         playNextSentence();
       } else {
         setIsTeacherSpeaking(false);
-        // Resume microphone recognition once teacher finishes
-        if (!isMutedRef.current && isSessionActiveRef.current && recognitionRef.current) {
+        // Resume microphone recognition once teacher finishes (if no turn is currently being processed)
+        if (
+          !isMutedRef.current &&
+          isSessionActiveRef.current &&
+          !isProcessingTurnRef.current &&
+          recognitionRef.current
+        ) {
           try {
             recognitionRef.current.start();
             isRecognitionActiveRef.current = true;
@@ -245,6 +266,15 @@ export function LiveVoiceModal({
 
     utterance.onend = onUtteranceComplete;
     utterance.onerror = onUtteranceComplete;
+
+    // Safety watchdog: prevent stuck speaking state if Chromium drops onend
+    const maxDurationMs = Math.max(3500, nextSentence.length * 120);
+    safetyTimer = window.setTimeout(() => {
+      if (activeUtterancesRef.current.has(utterance)) {
+        console.warn('Speech synthesis timeout watchdog triggered.');
+        onUtteranceComplete();
+      }
+    }, maxDurationMs);
 
     if (window.speechSynthesis.paused) {
       window.speechSynthesis.resume();
@@ -268,12 +298,30 @@ export function LiveVoiceModal({
   // --- Dispatch Student Voice Turn to High-Capacity Endpoint ---
   const submitStudentTurn = useCallback(
     async (textToSend: string) => {
-      if (!textToSend || !textToSend.trim() || isProcessingTurn) return;
+      if (!textToSend || !textToSend.trim() || isProcessingTurnRef.current) return;
 
       if (silenceTimerRef.current) {
         window.clearTimeout(silenceTimerRef.current);
         silenceTimerRef.current = null;
       }
+
+      // If teacher was speaking when student sends turn, interrupt immediately
+      if (isSpeakingRef.current) {
+        window.speechSynthesis.cancel();
+        activeUtterancesRef.current.clear();
+        audioQueueRef.current = [];
+        isSpeakingRef.current = false;
+        setIsTeacherSpeaking(false);
+      }
+
+      const cleanedQuery = deduplicateConsecutiveWords(
+        cleanVoiceRecognitionText(textToSend, language)
+      );
+      if (!cleanedQuery) return;
+
+      // Mark turn processing true BEFORE stopping recognition so onend will not restart
+      isProcessingTurnRef.current = true;
+      setIsProcessingTurn(true);
 
       // IMMEDIATELY pause speech recognition so room noise/feedback is not recorded while waiting
       if (recognitionRef.current && isRecognitionActiveRef.current) {
@@ -285,15 +333,9 @@ export function LiveVoiceModal({
         isRecognitionActiveRef.current = false;
       }
 
-      const cleanedQuery = deduplicateConsecutiveWords(
-        cleanVoiceRecognitionText(textToSend, language)
-      );
-      if (!cleanedQuery) return;
-
       appendTranscript('student', cleanedQuery);
       setInterimText('');
       committedStudentTurnRef.current = '';
-      setIsProcessingTurn(true);
 
       // Add placeholder for tutor
       const tutorPlaceholderId = Date.now();
@@ -399,11 +441,18 @@ export function LiveVoiceModal({
           return copy;
         });
       } finally {
+        isProcessingTurnRef.current = false;
         setIsProcessingTurn(false);
       }
     },
-    [appendTranscript, isProcessingTurn, language, queueSentenceForAudio, subject]
+    [appendTranscript, engine, language, queueSentenceForAudio, subject]
   );
+
+  // Keep a stable ref to submitStudentTurn to prevent startHighCapacityEngine recreation
+  const submitStudentTurnRef = useRef(submitStudentTurn);
+  useEffect(() => {
+    submitStudentTurnRef.current = submitStudentTurn;
+  }, [submitStudentTurn]);
 
   // --- Interrupt Teacher ---
   const handleInterruptTeacher = useCallback(() => {
@@ -413,7 +462,7 @@ export function LiveVoiceModal({
     isSpeakingRef.current = false;
     setIsTeacherSpeaking(false);
 
-    if (!isMutedRef.current && isSessionActiveRef.current && recognitionRef.current) {
+    if (!isMutedRef.current && isSessionActiveRef.current && !isProcessingTurnRef.current && recognitionRef.current) {
       try {
         recognitionRef.current.start();
         isRecognitionActiveRef.current = true;
@@ -471,16 +520,16 @@ export function LiveVoiceModal({
       const combined = `${committedStudentTurnRef.current}${finalStr}${interimStr}`.trimStart();
       setInterimText(combined);
 
-      // Auto-silence detection: 1.4 seconds of silence triggers automatic submission
+      // Auto-silence detection: 1.8 seconds of silence triggers automatic submission
       if (silenceTimerRef.current) {
         window.clearTimeout(silenceTimerRef.current);
       }
       if (combined.trim().length > 0) {
         silenceTimerRef.current = window.setTimeout(() => {
           if (combined.trim().length > 0) {
-            void submitStudentTurn(combined);
+            void submitStudentTurnRef.current(combined);
           }
-        }, 1400);
+        }, 1800);
       }
     };
 
@@ -498,12 +547,12 @@ export function LiveVoiceModal({
 
     recognition.onend = () => {
       isRecognitionActiveRef.current = false;
-      // Restart recognition if session is active and teacher is not currently speaking
+      // Restart recognition if session is active, teacher is not speaking, and no turn is processing
       if (
         isSessionActiveRef.current &&
         !isMutedRef.current &&
         !isSpeakingRef.current &&
-        !isProcessingTurn
+        !isProcessingTurnRef.current
       ) {
         try {
           recognition.start();
@@ -523,7 +572,7 @@ export function LiveVoiceModal({
       console.warn('Recognition start warning:', err);
       setStatus('live');
     }
-  }, [language, submitStudentTurn, isProcessingTurn]);
+  }, [language]);
 
   // --- Gemini Native Live WebSocket Session ---
   const startGeminiLiveSession = useCallback(() => {
