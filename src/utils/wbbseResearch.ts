@@ -1179,11 +1179,21 @@ export function formatTeacherSpeechForAudio(
   let text = rawText
     .replace(/\$\$/g, ' ')
     .replace(/\$/g, ' ')
-    .replace(/[`*_#]/g, ' ')
-    .replace(/\s*->\s*|\s*=>\s*|→/g, language === 'bn' ? ' অর্থাৎ ' : ' which gives ');
+    .replace(/[`*_#~]/g, ' ')
+    .replace(/^[\s*\-•>]+\s*/gm, '')
+    .replace(/\s*->\s*|\s*=>\s*|→/g, language === 'bn' ? ' অর্থাৎ ' : ' which gives ')
+    .replace(/[:;—–]/g, ', ');
 
   if (language === 'bn') {
     const bnReplacements: Array<[RegExp, string]> = [
+      [/WBBSE/gi, 'মধ্যশিক্ষা পর্ষদ'],
+      [/ABTA/gi, 'এবিটিএ'],
+      [/WBTA/gi, 'ডব্লিউবিটিএ'],
+      [/MCQ/gi, 'এমসিকিউ'],
+      [/VSA/gi, 'অতি সংক্ষিপ্ত প্রশ্ন'],
+      [/SA/gi, 'সংক্ষিপ্ত প্রশ্ন'],
+      [/LA/gi, 'বড় প্রশ্ন'],
+      [/(\d+)\s*Marks?/gi, '$1 নম্বর'],
       [/α/g, 'আলফা'],
       [/β/g, 'বিটা'],
       [/γ/g, 'গামা'],
@@ -1233,6 +1243,7 @@ export function formatTeacherSpeechForAudio(
       [/≥/g, ' is greater than or equal to '],
       [/\s*=\s*/g, ' equals '],
       [/\s*\+\s*/g, ' plus '],
+      [/(\d+)\s*\/\s*(\d+)/g, '$1 over $2'],
     ];
     for (const [pattern, replacement] of enReplacements) {
       text = text.replace(pattern, replacement);

@@ -957,6 +957,80 @@ async function startServer() {
 
   const ttsAudioCache = new Map<string, Buffer>();
 
+  async function synthesizeGoogleCloudTTS(text: string, lang: 'bn' | 'en'): Promise<Buffer | null> {
+    const apiKey = process.env.GOOGLE_TTS_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) return null;
+    try {
+      const voiceName = lang === 'bn' ? 'bn-IN-Neural2-A' : 'en-IN-Neural2-D';
+      const langCode = lang === 'bn' ? 'bn-IN' : 'en-IN';
+      const res = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          input: { text },
+          voice: { languageCode: langCode, name: voiceName },
+          audioConfig: { audioEncoding: 'MP3', speakingRate: 0.95 },
+        }),
+        signal: AbortSignal.timeout(4500),
+      });
+      if (!res.ok) return null;
+      const data = (await res.json()) as { audioContent?: string };
+      if (data.audioContent) {
+        return Buffer.from(data.audioContent, 'base64');
+      }
+    } catch {
+      // fallback
+    }
+    return null;
+  }
+
+  async function synthesizeElevenLabsTTS(text: string): Promise<Buffer | null> {
+    const apiKey = process.env.ELEVENLABS_API_KEY;
+    if (!apiKey) return null;
+    try {
+      const voiceId = process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM';
+      const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'xi-api-key': apiKey,
+        },
+        body: JSON.stringify({
+          text,
+          model_id: 'eleven_multilingual_v2',
+        }),
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) return null;
+      const ab = await res.arrayBuffer();
+      return Buffer.from(ab);
+    } catch {
+      // fallback
+    }
+    return null;
+  }
+
+  async function synthesizeFallbackTTS(text: string, lang: 'bn' | 'en'): Promise<Buffer | null> {
+    try {
+      const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang === 'bn' ? 'bn' : 'en-IN'}&client=tw-ob&ttsspeed=0.9&q=${encodeURIComponent(text)}`;
+      const res = await fetch(ttsUrl, {
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          Referer: 'https://translate.google.com/',
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (res.ok) {
+        const ab = await res.arrayBuffer();
+        return Buffer.from(ab);
+      }
+    } catch {
+      // ignore
+    }
+    return null;
+  }
+
   app.get('/api/tts-audio', async (req, res) => {
     try {
       const text = typeof req.query.text === 'string' ? req.query.text.trim() : '';
@@ -981,52 +1055,56 @@ async function startServer() {
         return;
       }
 
-      // Split into chunks of max 150 characters for Google Translate TTS API
-      const chunks: string[] = [];
-      const words = normalized.split(/\s+/);
-      let currentChunk = '';
-      for (const word of words) {
-        if ((currentChunk + ' ' + word).trim().length <= 150) {
-          currentChunk = (currentChunk + ' ' + word).trim();
+      // 1. Try Google Cloud Neural2 or ElevenLabs for human studio speech
+      let audioBuffer = await synthesizeGoogleCloudTTS(normalized, lang);
+      if (!audioBuffer) {
+        audioBuffer = await synthesizeElevenLabsTTS(normalized);
+      }
+
+      // 2. If studio cloud voice is not enabled, use enhanced calm fallback
+      if (!audioBuffer) {
+        if (normalized.length <= 160) {
+          audioBuffer = await synthesizeFallbackTTS(normalized, lang);
         } else {
+          // Split ONLY at natural punctuation / clause boundaries
+          const clauses = normalized.split(/(?<=[,;।?!])\s+/).filter(Boolean);
+          const chunks: string[] = [];
+          let currentChunk = '';
+          for (const clause of clauses) {
+            if ((currentChunk + ' ' + clause).trim().length <= 160) {
+              currentChunk = (currentChunk + ' ' + clause).trim();
+            } else {
+              if (currentChunk) chunks.push(currentChunk);
+              currentChunk = clause.slice(0, 160);
+            }
+          }
           if (currentChunk) chunks.push(currentChunk);
-          currentChunk = word.slice(0, 150);
-        }
-      }
-      if (currentChunk) chunks.push(currentChunk);
 
-      const audioBuffers: Buffer[] = [];
-      for (const chunk of chunks) {
-        const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang === 'bn' ? 'bn' : 'en-IN'}&client=tw-ob&q=${encodeURIComponent(chunk)}`;
-        const ttsRes = await fetch(ttsUrl, {
-          headers: {
-            'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            Referer: 'https://translate.google.com/',
-          },
-          signal: AbortSignal.timeout(6000),
-        });
-        if (ttsRes.ok) {
-          const ab = await ttsRes.arrayBuffer();
-          audioBuffers.push(Buffer.from(ab));
+          const parts: Buffer[] = [];
+          for (const c of chunks) {
+            const part = await synthesizeFallbackTTS(c, lang);
+            if (part) parts.push(part);
+          }
+          if (parts.length > 0) {
+            audioBuffer = Buffer.concat(parts);
+          }
         }
       }
 
-      if (audioBuffers.length === 0) {
+      if (!audioBuffer) {
         res.status(502).send('Audio generation failed');
         return;
       }
 
-      const merged = Buffer.concat(audioBuffers);
       if (ttsAudioCache.size > 200) {
         const firstKey = ttsAudioCache.keys().next().value;
         if (firstKey) ttsAudioCache.delete(firstKey);
       }
-      ttsAudioCache.set(cacheKey, merged);
+      ttsAudioCache.set(cacheKey, audioBuffer);
 
       res.setHeader('Content-Type', 'audio/mpeg');
       res.setHeader('Cache-Control', 'public, max-age=86400');
-      res.send(merged);
+      res.send(audioBuffer);
     } catch (err) {
       console.warn('TTS audio generation error:', err);
       res.status(500).send('TTS audio generation error');

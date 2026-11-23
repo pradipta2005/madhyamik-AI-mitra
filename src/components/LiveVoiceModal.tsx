@@ -154,6 +154,8 @@ export function LiveVoiceModal({
   const isSessionActiveRef = useRef(false);
   const activeUtterancesRef = useRef<Set<SpeechSynthesisUtterance>>(new Set());
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const spokenTextRef = useRef('');
+  const fullTutorTextRef = useRef('');
 
   // Chromium speech synthesis watchdog and voice pre-warming
   useEffect(() => {
@@ -248,6 +250,20 @@ export function LiveVoiceModal({
     isSpeakingRef.current = true;
     setIsTeacherSpeaking(true);
 
+    // Synchronously reveal each spoken sentence as it begins playing
+    spokenTextRef.current = spokenTextRef.current
+      ? `${spokenTextRef.current}\n\n${nextSentence}`
+      : nextSentence;
+
+    setTurns((prev) => {
+      const copy = [...prev];
+      const last = copy[copy.length - 1];
+      if (last && last.speaker === 'tutor') {
+        copy[copy.length - 1] = { ...last, text: spokenTextRef.current };
+      }
+      return copy;
+    });
+
     // Pause recognition to prevent feedback echo
     if (recognitionRef.current && isRecognitionActiveRef.current) {
       try {
@@ -275,6 +291,17 @@ export function LiveVoiceModal({
         playNextSentence();
       } else {
         setIsTeacherSpeaking(false);
+        // Once all spoken audio completes, ensure the full response is fully visible
+        if (fullTutorTextRef.current) {
+          setTurns((prev) => {
+            const copy = [...prev];
+            const last = copy[copy.length - 1];
+            if (last && last.speaker === 'tutor') {
+              copy[copy.length - 1] = { ...last, text: fullTutorTextRef.current };
+            }
+            return copy;
+          });
+        }
         // Resume microphone recognition once teacher finishes (if no turn is currently being processed)
         if (
           !isMutedRef.current &&
@@ -366,6 +393,16 @@ export function LiveVoiceModal({
         audioQueueRef.current = [];
         isSpeakingRef.current = false;
         setIsTeacherSpeaking(false);
+        if (fullTutorTextRef.current) {
+          setTurns((prev) => {
+            const copy = [...prev];
+            const last = copy[copy.length - 1];
+            if (last && last.speaker === 'tutor') {
+              copy[copy.length - 1] = { ...last, text: fullTutorTextRef.current };
+            }
+            return copy;
+          });
+        }
       }
 
       const cleanedQuery = deduplicateConsecutiveWords(
@@ -390,6 +427,8 @@ export function LiveVoiceModal({
       appendTranscript('student', cleanedQuery);
       setInterimText('');
       committedStudentTurnRef.current = '';
+      spokenTextRef.current = '';
+      fullTutorTextRef.current = '';
 
       // Add placeholder for tutor
       const tutorPlaceholderId = Date.now();
@@ -427,7 +466,6 @@ export function LiveVoiceModal({
         const reader = res.body.getReader();
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
-        let fullTutorText = '';
 
         while (true) {
           const { done, value } = await reader.read();
@@ -446,20 +484,10 @@ export function LiveVoiceModal({
             try {
               const event = JSON.parse(jsonStr);
               if (event.type === 'chunk' && typeof event.text === 'string') {
-                fullTutorText += event.text;
+                fullTutorTextRef.current += event.text;
                 currentSentenceBufferRef.current += event.text;
 
-                // Live caption visual update
-                setTurns((prev) => {
-                  const copy = [...prev];
-                  const last = copy[copy.length - 1];
-                  if (last && last.speaker === 'tutor') {
-                    copy[copy.length - 1] = { ...last, text: fullTutorText };
-                  }
-                  return copy;
-                });
-
-                // Check for completed sentences to pipeline audio
+                // Check for completed sentences to pipeline audio and synchronize visible text
                 const { sentences, remainder } = splitCompletedSentences(
                   currentSentenceBufferRef.current
                 );
@@ -520,6 +548,17 @@ export function LiveVoiceModal({
     audioQueueRef.current = [];
     isSpeakingRef.current = false;
     setIsTeacherSpeaking(false);
+
+    if (fullTutorTextRef.current) {
+      setTurns((prev) => {
+        const copy = [...prev];
+        const last = copy[copy.length - 1];
+        if (last && last.speaker === 'tutor') {
+          copy[copy.length - 1] = { ...last, text: fullTutorTextRef.current };
+        }
+        return copy;
+      });
+    }
 
     if (!isMutedRef.current && isSessionActiveRef.current && !isProcessingTurnRef.current && recognitionRef.current) {
       try {
