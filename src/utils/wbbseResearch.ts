@@ -768,9 +768,9 @@ function normalizeBlackboardLines(raw: unknown): BlackboardLine[] {
 }
 
   const solveMatch =
-    cleanText.match(/```json:problem_solve\s*([\s\S]*?)```/i) ||
+    cleanText.match(/```json:problem_solve\s*([\s\S]*?)(?:```|$)/i) ||
     cleanText.match(
-      /```json\s*(\{[\s\S]*?(?:"blackboardLines"|"teacherSpeech"|"subjectMismatch")[\s\S]*?\})\s*```/i
+      /```json\s*(\{[\s\S]*?(?:"blackboardLines"|"teacherSpeech"|"subjectMismatch")[\s\S]*?\})\s*(?:```|$)/i
     );
   if (solveMatch && solveMatch[1]) {
     try {

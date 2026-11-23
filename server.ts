@@ -320,7 +320,37 @@ MODE 3: CONCEPT EXPLANATION & DOUBT CLEARING
 - Provide a clear, beginner-friendly explanation with intuitive real-life analogies, step-by-step logic, and textbook definitions.
 
 MODE 4: BLACKBOARD TEACHER PROBLEM SOLVE
-(Triggered when solving numericals in Mathematics or Physical Science in solveMode).
+(Triggered when solving numericals, theorems, constructions, or step-by-step problems in Mathematics or Physical Science in solveMode or on problem solve queries).
+${subjectStrictRule}
+- TEACHING WORKFLOW (ONE SECTION AT A TIME ON THE BLACKBOARD):
+  - Act like a real, warm, encouraging WBBSE classroom teacher standing at a green blackboard with chalk in hand.
+  - Do NOT solve the whole problem in a single dump! Break a typical Class 10 problem into 3 to 4 progressive teaching sections:
+    * Section 1: Understanding the Problem, Core Concept & Given Data
+    * Section 2: Choosing Formula / Diagram Setup & Unit Check
+    * Section 3: Step-by-Step Solving / Calculations
+    * Section 4: Final Answer & Examiner Score Check
+  - CURRENT ACTION: "${solveAction}" | TARGET SECTION TO WRITE NOW: Section ${targetSection}.
+  - ${simplificationNote}
+  - Write ONLY Section ${targetSection} right now!
+  - If Section ${targetSection} is NOT the final section, set "isFinalSection": false, keep the remaining calculation for the next section after the student confirms understanding, and ask a friendly check-in question in "feedbackQuestion".
+  - ONLY when Section ${targetSection} actually finishes solving the problem (typically Section 3 or 4), set "isFinalSection": true, include a blackboard line with "kind": "answer", and populate "finalAnswer" and "examTip".${bengaliTeacherSpeechRule}
+- Keep prose outside the JSON block to a brief 1-sentence warm classroom cue.
+- Output a fenced JSON block strictly tagged \`\`\`json:problem_solve ... \`\`\` as a single JSON object with:
+  - "topicTitle": string (problem/chapter title)
+  - "subjectGuard": "${subject === 'Physical Science' ? 'Physical Science' : 'Mathematics'}"
+  - "subjectMismatch": boolean (false if on-subject, true if off-subject)
+  - "detectedSubject": string (optional, only if subjectMismatch is true)
+  - "mismatchReason": string (optional, only if subjectMismatch is true)
+  - "sectionNumber": ${targetSection}
+  - "estimatedTotalSections": number (typically 3 or 4; >= ${targetSection})
+  - "isFinalSection": boolean (true ONLY when the problem is completely solved in this section or on subjectMismatch)
+  - "sectionTitle": string (crisp title for Section ${targetSection}, e.g. "Section 1: Concept & Given Data")
+  - "teacherSpeech": string (3–4 articulate, warm, audio-ready sentences that the teacher SPEAKS aloud to explain THIS exact section clearly without raw symbols/LaTeX)
+  - "blackboardLines": array of 3 to 7 concise chalk lines for THIS SECTION ONLY, each { "kind": "heading" | "text" | "formula" | "work" | "highlight" | "answer", "content": string } (short, crisp chalk lines as a teacher actually writes on a board — use equations/arrow notation like "1/R = 1/10 + 1/15" clearly!)
+  - "finalAnswer": string (REQUIRED when isFinalSection is true; omit or "" when false)
+  - "examTip": string (concise WBBSE/ABTA/WBTA board marking tip when isFinalSection is true)
+  - "simplificationLevel": ${simplificationLevel}
+  - "feedbackQuestion": string (polite, natural spoken check-in question asking the student in ${language === 'bn' ? 'Bengali' : 'English'} if they understood Section ${targetSection} and are ready for the next section)
 
 ${videoDirective}
 ${pyqContext}${videoContext}${attachmentContext}${boardHistorySummary}`;
@@ -911,11 +941,13 @@ async function startServer() {
         subject = 'All Subjects',
         language = 'bn',
         history = [],
+        preferOpenRouter = true,
       } = req.body as {
         message?: string;
         subject?: WbbseSubject;
         language?: LanguageCode;
         history?: Array<{ speaker: 'student' | 'tutor'; text: string }>;
+        preferOpenRouter?: boolean;
       };
 
       if (typeof message !== 'string' || !message.trim()) {
@@ -990,12 +1022,31 @@ ADAPTIVE ORAL PREPARATION & VIVA EXAMINATION RULES:
 
       let fullText = '';
       try {
-        const streamResult = await generateResearchStreamWithFallback(
-          getAiClient(),
-          contents,
-          systemInstruction,
-          false // fast conversational oral viva without external search overhead
-        );
+        let streamResult: ResearchStreamResult;
+
+        // When Unlimited OpenRouter mode is active or preferred, stream directly via OpenRouter
+        if (preferOpenRouter && process.env.OPEN_ROUTER_API_KEY) {
+          try {
+            console.log('Live Voice Prep: Streaming via OpenRouter directly...');
+            const orStream = callOpenRouterStream(contents, systemInstruction, false);
+            streamResult = { stream: orStream };
+          } catch (orErr) {
+            console.warn('Live voice OpenRouter direct stream failed, trying Gemini:', orErr);
+            streamResult = await generateResearchStreamWithFallback(
+              getAiClient(),
+              contents,
+              systemInstruction,
+              false
+            );
+          }
+        } else {
+          streamResult = await generateResearchStreamWithFallback(
+            getAiClient(),
+            contents,
+            systemInstruction,
+            false
+          );
+        }
 
         for await (const chunk of streamResult.stream) {
           const chunkText = chunk.text;

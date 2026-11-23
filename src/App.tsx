@@ -363,7 +363,14 @@ export default function App() {
       user.uid,
       activeSessionId,
       (msgs) => {
-        setFirestoreMessages(msgs);
+        setFirestoreMessages((prev) => {
+          // Keep active local in-flight streaming message so incoming Firestore snapshots don't erase it
+          const streamingMsg = prev.find((m) => m.isStreaming);
+          if (streamingMsg && !msgs.some((m) => m.id === streamingMsg.id)) {
+            return [...msgs, streamingMsg];
+          }
+          return msgs;
+        });
       },
       (err) => {
         console.error('Messages subscription error:', err);
@@ -796,11 +803,21 @@ export default function App() {
                 if (event.type === 'chunk' && typeof event.text === 'string') {
                   rawAccumulatedText += event.text;
                   const displayProse = stripInternalFences(rawAccumulatedText);
-                  setFirestoreMessages((prev) =>
-                    prev.map((m) =>
+                  setFirestoreMessages((prev) => {
+                    const exists = prev.some((m) => m.id === assistantMsgId);
+                    if (!exists) {
+                      return [
+                        ...prev,
+                        {
+                          ...tempStreamingMsg,
+                          text: displayProse,
+                        },
+                      ];
+                    }
+                    return prev.map((m) =>
                       m.id === assistantMsgId ? { ...m, text: displayProse } : m
-                    )
-                  );
+                    );
+                  });
                 } else if (event.type === 'done') {
                   donePayload = event as StreamDonePayload;
                 } else if (event.type === 'error') {

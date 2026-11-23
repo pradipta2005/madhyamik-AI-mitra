@@ -90,6 +90,13 @@ function splitCompletedSentences(buffer: string): { sentences: string[]; remaind
   const regex = /([^।?!.\n]+[।?!.\n]+)/g;
   const matches = buffer.match(regex);
   if (!matches) {
+    // If buffer is getting long without terminal punctuation, split at a natural pause (comma or semicolon)
+    if (buffer.length > 130) {
+      const commaMatch = buffer.match(/^([^,;]+[,;]+)\s*(.*)$/);
+      if (commaMatch && commaMatch[1]) {
+        return { sentences: [commaMatch[1].trim()], remainder: commaMatch[2].trimStart() };
+      }
+    }
     return { sentences: [], remainder: buffer };
   }
   const sentences = matches.map((s) => s.trim()).filter((s) => s.length > 0);
@@ -134,6 +141,28 @@ export function LiveVoiceModal({
   const currentSentenceBufferRef = useRef('');
   const committedStudentTurnRef = useRef('');
   const isSessionActiveRef = useRef(false);
+  const activeUtterancesRef = useRef<Set<SpeechSynthesisUtterance>>(new Set());
+
+  // Chromium speech synthesis watchdog and voice pre-warming
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    const preloadVoices = () => {
+      window.speechSynthesis.getVoices();
+    };
+    window.speechSynthesis.onvoiceschanged = preloadVoices;
+    preloadVoices();
+
+    const watchdog = window.setInterval(() => {
+      if (isSpeakingRef.current && window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+    }, 2500);
+
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+      window.clearInterval(watchdog);
+    };
+  }, []);
 
   useEffect(() => {
     isMutedRef.current = isMuted;
@@ -180,6 +209,7 @@ export function LiveVoiceModal({
     }
 
     const utterance = new SpeechSynthesisUtterance(nextSentence);
+    activeUtterancesRef.current.add(utterance);
     utterance.lang = language === 'bn' ? 'bn-IN' : 'en-IN';
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
@@ -194,7 +224,8 @@ export function LiveVoiceModal({
       utterance.voice = matchingVoice;
     }
 
-    utterance.onend = () => {
+    const onUtteranceComplete = () => {
+      activeUtterancesRef.current.delete(utterance);
       isSpeakingRef.current = false;
       if (audioQueueRef.current.length > 0) {
         playNextSentence();
@@ -212,23 +243,12 @@ export function LiveVoiceModal({
       }
     };
 
-    utterance.onerror = () => {
-      isSpeakingRef.current = false;
-      if (audioQueueRef.current.length > 0) {
-        playNextSentence();
-      } else {
-        setIsTeacherSpeaking(false);
-        if (!isMutedRef.current && isSessionActiveRef.current && recognitionRef.current) {
-          try {
-            recognitionRef.current.start();
-            isRecognitionActiveRef.current = true;
-          } catch {
-            // ignore
-          }
-        }
-      }
-    };
+    utterance.onend = onUtteranceComplete;
+    utterance.onerror = onUtteranceComplete;
 
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
     window.speechSynthesis.speak(utterance);
   }, [language]);
 
@@ -253,6 +273,16 @@ export function LiveVoiceModal({
       if (silenceTimerRef.current) {
         window.clearTimeout(silenceTimerRef.current);
         silenceTimerRef.current = null;
+      }
+
+      // IMMEDIATELY pause speech recognition so room noise/feedback is not recorded while waiting
+      if (recognitionRef.current && isRecognitionActiveRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {
+          // ignore
+        }
+        isRecognitionActiveRef.current = false;
       }
 
       const cleanedQuery = deduplicateConsecutiveWords(
@@ -290,6 +320,7 @@ export function LiveVoiceModal({
             subject,
             language,
             history: historyPayload,
+            preferOpenRouter: engine === 'high-capacity',
           }),
         });
 
@@ -377,6 +408,7 @@ export function LiveVoiceModal({
   // --- Interrupt Teacher ---
   const handleInterruptTeacher = useCallback(() => {
     window.speechSynthesis.cancel();
+    activeUtterancesRef.current.clear();
     audioQueueRef.current = [];
     isSpeakingRef.current = false;
     setIsTeacherSpeaking(false);
