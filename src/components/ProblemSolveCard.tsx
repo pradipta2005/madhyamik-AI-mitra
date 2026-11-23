@@ -124,6 +124,8 @@ export function ProblemSolveCard({
   const [isLoadingVoice, setIsLoadingVoice] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playlistRef = useRef<string[]>([]);
+  const cachedPlaylistRef = useRef<Record<string, string[]>>({});
   const cachedAudioUrlRef = useRef<Record<string, string>>({});
 
   const lines = useMemo(() => data.blackboardLines ?? [], [data.blackboardLines]);
@@ -176,6 +178,7 @@ export function ProblemSolveCard({
   }, [isLatestAssistant, lines]);
 
   const stopAllAudio = () => {
+    playlistRef.current = [];
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -187,14 +190,75 @@ export function ProblemSolveCard({
     setIsSpeaking(false);
   };
 
+  const playAudioPlaylist = (urls: string[]) => {
+    stopAllAudio();
+    if (!urls || urls.length === 0) {
+      setIsSpeaking(false);
+      return;
+    }
+
+    playlistRef.current = [...urls];
+    setIsSpeaking(true);
+
+    const playNext = () => {
+      if (playlistRef.current.length === 0) {
+        setIsSpeaking(false);
+        audioRef.current = null;
+        return;
+      }
+
+      const nextUrl = playlistRef.current.shift();
+      if (!nextUrl) {
+        setIsSpeaking(false);
+        audioRef.current = null;
+        return;
+      }
+
+      const audio = new Audio(nextUrl);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        playNext();
+      };
+
+      audio.onerror = () => {
+        console.warn('Blackboard audio segment error, skipping to next segment');
+        playNext();
+      };
+
+      audio.play().catch((err) => {
+        console.warn('Blackboard audio play failed, skipping to next segment:', err);
+        playNext();
+      });
+    };
+
+    playNext();
+  };
+
   const playBrowserSpeechFallback = (normalizedText: string): boolean => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
       return false;
     }
     const synth = window.speechSynthesis;
     synth.cancel();
+
+    // Verify if an actual Bengali voice exists in the browser
+    const voices = synth.getVoices();
+    const matchingVoice = voices.find(
+      (v) =>
+        v.lang.toLowerCase().startsWith(language === 'bn' ? 'bn' : 'en') ||
+        (language === 'bn' && v.name.toLowerCase().includes('bengali'))
+    );
+
+    // If in Bengali mode and no Bengali voice exists, DO NOT let English voice read garbled sounds
+    if (language === 'bn' && !matchingVoice) {
+      console.warn('No Bengali browser voice installed; avoiding distorted English synthesis.');
+      return false;
+    }
+
     const utterance = new SpeechSynthesisUtterance(normalizedText);
     utterance.lang = language === 'bn' ? 'bn-IN' : 'en-IN';
+    if (matchingVoice) utterance.voice = matchingVoice;
     utterance.rate = 0.94;
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
@@ -218,31 +282,11 @@ export function ProblemSolveCard({
     if (!rawSpeech) return;
 
     const cacheKey = `${language}:${rawSpeech}`;
-    const cachedUrl = cachedAudioUrlRef.current[cacheKey];
+    const cachedUrls = cachedPlaylistRef.current[cacheKey];
 
-    const playAudioUrl = async (url: string) => {
-      stopAllAudio();
-      const audio = new Audio(url);
-      audioRef.current = audio;
-      audio.onended = () => {
-        setIsSpeaking(false);
-        audioRef.current = null;
-      };
-      audio.onerror = () => {
-        setIsSpeaking(false);
-        audioRef.current = null;
-      };
-      setIsSpeaking(true);
-      await audio.play();
-    };
-
-    if (cachedUrl) {
-      try {
-        await playAudioUrl(cachedUrl);
-        return;
-      } catch {
-        setIsSpeaking(false);
-      }
+    if (cachedUrls && cachedUrls.length > 0) {
+      playAudioPlaylist(cachedUrls);
+      return;
     }
 
     setIsLoadingVoice(true);
@@ -252,43 +296,42 @@ export function ProblemSolveCard({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: rawSpeech, language }),
       });
+
       if (res.ok) {
         const payload = (await res.json()) as {
-          audioBase64?: string;
-          mimeType?: string;
-          useBrowserSpeech?: boolean;
+          audioUrls?: string[];
           normalizedText?: string;
         };
 
-        if (payload.audioBase64) {
-          const binary = atob(payload.audioBase64);
-          const bytes = new Uint8Array(binary.length);
-          for (let i = 0; i < binary.length; i++) {
-            bytes[i] = binary.charCodeAt(i);
-          }
-          const blob = new Blob([bytes], { type: payload.mimeType || 'audio/wav' });
-          const objectUrl = URL.createObjectURL(blob);
-          cachedAudioUrlRef.current[cacheKey] = objectUrl;
-          await playAudioUrl(objectUrl);
+        if (Array.isArray(payload.audioUrls) && payload.audioUrls.length > 0) {
+          cachedPlaylistRef.current[cacheKey] = payload.audioUrls;
+          playAudioPlaylist(payload.audioUrls);
           return;
         }
 
-        if (payload.useBrowserSpeech || payload.normalizedText) {
-          const spoken = payload.normalizedText || formatTeacherSpeechForAudio(rawSpeech, language);
-          playBrowserSpeechFallback(spoken);
+        if (payload.normalizedText) {
+          const fallbackUrl = `/api/tts-audio?text=${encodeURIComponent(payload.normalizedText)}&lang=${language}`;
+          cachedPlaylistRef.current[cacheKey] = [fallbackUrl];
+          playAudioPlaylist([fallbackUrl]);
           return;
         }
       }
-      throw new Error('TTS fallback');
+
+      throw new Error('TTS API failed');
     } catch {
       const normalized = formatTeacherSpeechForAudio(rawSpeech, language);
-      const started = playBrowserSpeechFallback(normalized);
-      if (!started) {
-        setVoiceError(
-          language === 'bn'
-            ? 'এই ব্রাউজারে ভয়েস প্লেব্যাক সমর্থিত নয়।'
-            : 'Browser speech playback is not supported.'
-        );
+      const fallbackUrl = `/api/tts-audio?text=${encodeURIComponent(normalized)}&lang=${language}`;
+      try {
+        playAudioPlaylist([fallbackUrl]);
+      } catch {
+        const started = playBrowserSpeechFallback(normalized);
+        if (!started) {
+          setVoiceError(
+            language === 'bn'
+              ? 'অডিও প্লে করতে সমস্যা হয়েছে। অনুগ্রহ করে পেজটি রিফ্রেশ করুন।'
+              : 'Audio playback failed. Please refresh the page.'
+          );
+        }
       }
     } finally {
       setIsLoadingVoice(false);

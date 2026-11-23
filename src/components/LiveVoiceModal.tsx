@@ -85,9 +85,10 @@ function base64Pcm16ToFloat32(base64: string): Float32Array {
 
 /**
  * Splits text stream into completed sentences by punctuation (। , ? , ! , . or newline)
+ * Preserves decimal numbers (e.g. 2.5, ৩.৫) and avoids premature short-clause slicing.
  */
 function splitCompletedSentences(buffer: string): { sentences: string[]; remainder: string } {
-  const regex = /([^।?!.\n]+[।?!.\n]+)/g;
+  const regex = /([^।?!\n]+(?:[।?!]|\.(?!\d)|\n+))/g;
   let lastIndex = 0;
   const sentences: string[] = [];
   let match: RegExpExecArray | null;
@@ -104,9 +105,10 @@ function splitCompletedSentences(buffer: string): { sentences: string[]; remaind
     return { sentences, remainder: buffer.slice(lastIndex).trimStart() };
   }
 
-  // If buffer is getting long without terminal punctuation, split at a natural pause (comma or semicolon)
-  if (buffer.length > 110) {
-    const commaMatch = buffer.match(/^([^,;]+[,;]+)\s*(.*)$/);
+  // If buffer is getting very long (> 140 chars) without terminal punctuation,
+  // split at a natural grammatical pause (comma or semicolon)
+  if (buffer.length > 140) {
+    const commaMatch = buffer.match(/^([^,;]{30,}[,;]+)\s*(.*)$/);
     if (commaMatch && commaMatch[1]) {
       return { sentences: [commaMatch[1].trim()], remainder: commaMatch[2].trimStart() };
     }
@@ -147,7 +149,7 @@ export function LiveVoiceModal({
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const isRecognitionActiveRef = useRef(false);
   const silenceTimerRef = useRef<number | null>(null);
-  const audioQueueRef = useRef<string[]>([]);
+  const audioQueueRef = useRef<Array<{ raw: string; spoken: string }>>([]);
   const isSpeakingRef = useRef(false);
   const currentSentenceBufferRef = useRef('');
   const committedStudentTurnRef = useRef('');
@@ -210,15 +212,23 @@ export function LiveVoiceModal({
         return;
       }
       try {
-        const utterance = new SpeechSynthesisUtterance(text);
-        activeUtterancesRef.current.add(utterance);
-        utterance.lang = language === 'bn' ? 'bn-IN' : 'en-IN';
         const voices = window.speechSynthesis.getVoices();
         const matchingVoice = voices.find(
           (v) =>
             v.lang.toLowerCase().startsWith(language === 'bn' ? 'bn' : 'en') ||
             (language === 'bn' && v.name.toLowerCase().includes('bengali'))
         );
+
+        // Crucial guard: Never let an English voice (like Microsoft David) mangle Bengali script!
+        if (language === 'bn' && !matchingVoice) {
+          console.warn('No Bengali browser voice installed; avoiding distorted English synthesis.');
+          onComplete();
+          return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        activeUtterancesRef.current.add(utterance);
+        utterance.lang = language === 'bn' ? 'bn-IN' : 'en-IN';
         if (matchingVoice) utterance.voice = matchingVoice;
 
         utterance.onend = () => {
@@ -244,16 +254,16 @@ export function LiveVoiceModal({
   // --- Sentence-by-Sentence Audio Playback Queue via Real Audio / TTS ---
   const playNextSentence = useCallback(() => {
     if (isSpeakingRef.current || audioQueueRef.current.length === 0) return;
-    const nextSentence = audioQueueRef.current.shift();
-    if (!nextSentence || !nextSentence.trim()) return;
+    const nextItem = audioQueueRef.current.shift();
+    if (!nextItem || !nextItem.spoken) return;
 
     isSpeakingRef.current = true;
     setIsTeacherSpeaking(true);
 
-    // Synchronously reveal each spoken sentence as it begins playing
+    // Synchronously reveal each spoken sentence's clean formatted text as it begins playing
     spokenTextRef.current = spokenTextRef.current
-      ? `${spokenTextRef.current}\n\n${nextSentence}`
-      : nextSentence;
+      ? `${spokenTextRef.current}\n\n${nextItem.raw}`
+      : nextItem.raw;
 
     setTurns((prev) => {
       const copy = [...prev];
@@ -320,14 +330,14 @@ export function LiveVoiceModal({
     };
 
     // Safety watchdog: prevent stuck speaking state if audio stalls
-    const maxDurationMs = Math.max(4500, nextSentence.length * 140);
+    const maxDurationMs = Math.max(4500, nextItem.spoken.length * 140);
     safetyTimer = window.setTimeout(() => {
       console.warn('Audio sentence watchdog triggered.');
       onAudioComplete();
     }, maxDurationMs);
 
     try {
-      const audioUrl = `/api/tts-audio?text=${encodeURIComponent(nextSentence)}&lang=${language === 'bn' ? 'bn' : 'en'}`;
+      const audioUrl = `/api/tts-audio?text=${encodeURIComponent(nextItem.spoken)}&lang=${language === 'bn' ? 'bn' : 'en'}`;
       const audio = new Audio(audioUrl);
       currentAudioRef.current = audio;
 
@@ -345,16 +355,16 @@ export function LiveVoiceModal({
       };
 
       audio.onerror = () => {
-        console.warn('TTS audio fetch error, falling back to browser SpeechSynthesis');
-        tryFallbackSpeechSynthesis(nextSentence, onAudioComplete);
+        console.warn('TTS audio fetch error, attempting fallback');
+        tryFallbackSpeechSynthesis(nextItem.spoken, onAudioComplete);
       };
 
       audio.play().catch((playErr) => {
         console.warn('Audio play() failed, trying SpeechSynthesis fallback:', playErr);
-        tryFallbackSpeechSynthesis(nextSentence, onAudioComplete);
+        tryFallbackSpeechSynthesis(nextItem.spoken, onAudioComplete);
       });
     } catch {
-      tryFallbackSpeechSynthesis(nextSentence, onAudioComplete);
+      tryFallbackSpeechSynthesis(nextItem.spoken, onAudioComplete);
     }
   }, [language, tryFallbackSpeechSynthesis]);
 
@@ -362,7 +372,10 @@ export function LiveVoiceModal({
     (sentence: string) => {
       const normalized = formatTeacherSpeechForAudio(sentence, language);
       if (normalized.trim()) {
-        audioQueueRef.current.push(normalized.trim());
+        audioQueueRef.current.push({
+          raw: sentence.trim(),
+          spoken: normalized.trim(),
+        });
         if (!isSpeakingRef.current) {
           playNextSentence();
         }

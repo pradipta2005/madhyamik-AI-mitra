@@ -1176,7 +1176,61 @@ export function formatTeacherSpeechForAudio(
   language: LanguageCode
 ): string {
   if (!rawText || !rawText.trim()) return '';
-  let text = rawText
+  let text = rawText;
+
+  // 1. Clean markdown links [label](url) -> label
+  text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+
+  // 2. Normalize LaTeX macros before stripping delimiters
+  if (language === 'bn') {
+    text = text
+      .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$1 বাই $2')
+      .replace(/\\sqrt\{([^}]+)\}/g, 'রুট $1')
+      .replace(/\\(?:times|cdot|ast)/g, ' গুণ ')
+      .replace(/\\pm/g, ' প্লাস মাইনাস ')
+      .replace(/\\approx/g, ' প্রায় সমান ')
+      .replace(/\\(?:ne|neq)/g, ' অসমান ')
+      .replace(/\\(?:le|leq)/g, ' লেস দ্যান অর ইকুয়াল টু ')
+      .replace(/\\(?:ge|geq)/g, ' গ্রেটার দ্যান অর ইকুয়াল টু ')
+      .replace(/\\(?:circ|degree)/g, ' ডিগ্রি')
+      .replace(/\\alpha/g, 'আলফা')
+      .replace(/\\beta/g, 'বিটা')
+      .replace(/\\gamma/g, 'গামা')
+      .replace(/\\(?:delta|Delta)/g, 'ডেল্টা')
+      .replace(/\\theta/g, 'থিটা')
+      .replace(/\\lambda/g, 'ল্যাম্বডা')
+      .replace(/\\mu/g, 'মিউ')
+      .replace(/\\pi/g, 'পাই')
+      .replace(/\\rho/g, 'রো')
+      .replace(/\\(?:omega|Omega)/g, 'ওহম');
+  } else {
+    text = text
+      .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$1 over $2')
+      .replace(/\\sqrt\{([^}]+)\}/g, 'square root of $1')
+      .replace(/\\(?:times|cdot|ast)/g, ' times ')
+      .replace(/\\pm/g, ' plus or minus ')
+      .replace(/\\approx/g, ' approximately equals ')
+      .replace(/\\(?:ne|neq)/g, ' is not equal to ')
+      .replace(/\\(?:le|leq)/g, ' is less than or equal to ')
+      .replace(/\\(?:ge|geq)/g, ' is greater than or equal to ')
+      .replace(/\\(?:circ|degree)/g, ' degrees')
+      .replace(/\\alpha/g, 'alpha')
+      .replace(/\\beta/g, 'beta')
+      .replace(/\\gamma/g, 'gamma')
+      .replace(/\\(?:delta|Delta)/g, 'delta')
+      .replace(/\\theta/g, 'theta')
+      .replace(/\\lambda/g, 'lambda')
+      .replace(/\\mu/g, 'mu')
+      .replace(/\\pi/g, 'pi')
+      .replace(/\\rho/g, 'rho')
+      .replace(/\\(?:omega|Omega)/g, 'ohm');
+  }
+
+  // Strip remaining LaTeX backslash commands
+  text = text.replace(/\\[a-zA-Z]+/g, ' ');
+
+  // 3. Strip markdown syntax
+  text = text
     .replace(/\$\$/g, ' ')
     .replace(/\$/g, ' ')
     .replace(/[`*_#~]/g, ' ')
@@ -1193,7 +1247,27 @@ export function formatTeacherSpeechForAudio(
       [/VSA/gi, 'অতি সংক্ষিপ্ত প্রশ্ন'],
       [/SA/gi, 'সংক্ষিপ্ত প্রশ্ন'],
       [/LA/gi, 'বড় প্রশ্ন'],
+      [/PYQ/gi, 'বিগত বছরের প্রশ্ন'],
       [/(\d+)\s*Marks?/gi, '$1 নম্বর'],
+      [/Class\s*10|Class\s*X/gi, 'দশম শ্রেণি'],
+      // Common Chemistry & Physics terms
+      [/\bCO2\b|CO₂/g, 'কার্বন ডাই অক্সাইড'],
+      [/\bH2O\b|H₂O/g, 'জল'],
+      [/\bO2\b|O₂/g, 'অক্সিজেন'],
+      [/\bN2\b|N₂/g, 'নাইট্রোজেন'],
+      [/\bH2\b|H₂/g, 'হাইড্রোজেন'],
+      [/\bSO2\b|SO₂/g, 'সালফার ডাই অক্সাইড'],
+      [/\bNaCl\b/g, 'সোডিয়াম ক্লোরাইড'],
+      [/\bHCl\b/g, 'হাইড্রোক্লোরিক অ্যাসিড'],
+      [/\bCaCO3\b|CaCO₃/g, 'ক্যালসিয়াম কার্বনেট'],
+      [/\bNH3\b|NH₃/g, 'অ্যামোনিয়া'],
+      // Subscripts and variables
+      [/\bP_?1\b|P₁/g, 'পি ওয়ান'],
+      [/\bP_?2\b|P₂/g, 'পি টু'],
+      [/\bV_?1\b|V₁/g, 'ভি ওয়ান'],
+      [/\bV_?2\b|V₂/g, 'ভি টু'],
+      [/\bT_?1\b|T₁/g, 'টি ওয়ান'],
+      [/\bT_?2\b|T₂/g, 'টি টু'],
       [/α/g, 'আলফা'],
       [/β/g, 'বিটা'],
       [/γ/g, 'গামা'],
@@ -1220,6 +1294,21 @@ export function formatTeacherSpeechForAudio(
     for (const [pattern, replacement] of bnReplacements) {
       text = text.replace(pattern, replacement);
     }
+
+    // Convert ASCII digits to Bengali digits for authentic Bengali TTS pronunciation
+    const bnDigits: Record<string, string> = {
+      '0': '০',
+      '1': '১',
+      '2': '২',
+      '3': '৩',
+      '4': '৪',
+      '5': '৫',
+      '6': '৬',
+      '7': '৭',
+      '8': '৮',
+      '9': '৯',
+    };
+    text = text.replace(/[0-9]/g, (d) => bnDigits[d] || d);
   } else {
     const enReplacements: Array<[RegExp, string]> = [
       [/α/g, 'alpha'],
@@ -1251,6 +1340,76 @@ export function formatTeacherSpeechForAudio(
   }
 
   return text.replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Splits raw or normalized teacher speech into bite-sized, grammatically
+ * complete sentences suitable for zero-distortion audio playback.
+ */
+export function splitSpeechIntoSentences(
+  rawText: string,
+  language: LanguageCode,
+  maxChunkLength = 160
+): string[] {
+  const normalized = formatTeacherSpeechForAudio(rawText, language);
+  if (!normalized) return [];
+
+  // Split on Bengali dari (।), question mark (?), exclamation (!), or newlines.
+  // For period (.), only split when NOT between numbers to preserve decimals.
+  const rawSentences = normalized
+    .split(/(?<=[।?!]|\.(?!\d)|\n+)\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const chunks: string[] = [];
+
+  for (const sentence of rawSentences) {
+    if (sentence.length <= maxChunkLength) {
+      chunks.push(sentence);
+      continue;
+    }
+
+    // Split long sentence at natural punctuation pauses (comma, semicolon)
+    const subParts = sentence
+      .split(/(?<=[,;])\s+/)
+      .map((p) => p.trim())
+      .filter(Boolean);
+
+    let current = '';
+    for (const part of subParts) {
+      if (!current) {
+        current = part;
+      } else if ((current + ' ' + part).length <= maxChunkLength) {
+        current = current + ' ' + part;
+      } else {
+        chunks.push(current);
+        current = part;
+      }
+    }
+
+    if (current) {
+      if (current.length > maxChunkLength) {
+        // If an individual clause still exceeds maxChunkLength, break cleanly along words
+        const words = current.split(/\s+/).filter(Boolean);
+        let wordChunk = '';
+        for (const w of words) {
+          if (!wordChunk) {
+            wordChunk = w;
+          } else if ((wordChunk + ' ' + w).length <= maxChunkLength) {
+            wordChunk = wordChunk + ' ' + w;
+          } else {
+            chunks.push(wordChunk);
+            wordChunk = w;
+          }
+        }
+        if (wordChunk) chunks.push(wordChunk);
+      } else {
+        chunks.push(current);
+      }
+    }
+  }
+
+  return chunks.filter((c) => c.length > 0);
 }
 
 export function parseAuthError(

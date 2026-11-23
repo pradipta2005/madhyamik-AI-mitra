@@ -23,6 +23,7 @@ import {
   searchPyqBank,
   searchVideoBank,
   shouldRecommendVideos,
+  splitSpeechIntoSentences,
   stripInternalFences,
 } from './wbbseResearch.ts';
 
@@ -324,6 +325,17 @@ test('formatTeacherSpeechForAudio normalizes Greek letters, math symbols, and La
   assert.ok(enOut.includes('squared'));
   assert.ok(enOut.includes('equals'));
   assert.ok(enOut.includes('ohm'));
+});
+
+test('splitSpeechIntoSentences splits paragraphs into clean sentences without dropping text or breaking numbers', () => {
+  const paragraph =
+    'বয়েলের সূত্রে তাপমাত্রা স্থির থাকলে নির্দিষ্ট ভরের গ্যাসের আয়তন চাপের সঙ্গে ব্যস্তানুপাতে পরিবর্তিত হয়। অর্থাৎ চাপ বাড়লে আয়তন কমে। গ্যাসের আয়তন ২.৫ লিটার থেকে বৃদ্ধি পেয়ে ৫.০ লিটার হলো। এবার বলো তো, চাপ কতটা কমবে?';
+  const sentences = splitSpeechIntoSentences(paragraph, 'bn', 160);
+  assert.ok(sentences.length >= 3);
+  // Decimal 2.5/5.0 was not split into separate pieces
+  assert.ok(sentences.some((s) => s.includes('২.৫') && s.includes('৫.০')));
+  // Terminal question preserved
+  assert.ok(sentences[sentences.length - 1].includes('চাপ কতটা কমবে?'));
 });
 
 test('parseAuthError formats auth/unauthorized-domain with steps, links, and localization', () => {

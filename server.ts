@@ -39,6 +39,7 @@ import {
   searchPyqBank,
   searchVideoBank,
   shouldRecommendVideos,
+  splitSpeechIntoSentences,
 } from './src/utils/wbbseResearch.ts';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -943,11 +944,23 @@ async function startServer() {
         return;
       }
 
-      // Fast, immediate speech synthesis instructions
+      const sentences = splitSpeechIntoSentences(normalizedSpeech, language, 150);
+      const audioUrls = sentences.map(
+        (s) =>
+          `/api/tts-audio?text=${encodeURIComponent(s)}&lang=${language === 'bn' ? 'bn' : 'en'}`
+      );
+
       res.json({
-        useBrowserSpeech: true,
         normalizedText: normalizedSpeech,
+        sentences: sentences.length > 0 ? sentences : [normalizedSpeech],
+        audioUrls:
+          audioUrls.length > 0
+            ? audioUrls
+            : [
+                `/api/tts-audio?text=${encodeURIComponent(normalizedSpeech)}&lang=${language === 'bn' ? 'bn' : 'en'}`,
+              ],
         language: language === 'bn' ? 'bn-IN' : 'en-IN',
+        useBrowserSpeech: false,
       });
     } catch (error) {
       console.error('TTS API error:', error);
@@ -1066,20 +1079,8 @@ async function startServer() {
         if (normalized.length <= 160) {
           audioBuffer = await synthesizeFallbackTTS(normalized, lang);
         } else {
-          // Split ONLY at natural punctuation / clause boundaries
-          const clauses = normalized.split(/(?<=[,;।?!])\s+/).filter(Boolean);
-          const chunks: string[] = [];
-          let currentChunk = '';
-          for (const clause of clauses) {
-            if ((currentChunk + ' ' + clause).trim().length <= 160) {
-              currentChunk = (currentChunk + ' ' + clause).trim();
-            } else {
-              if (currentChunk) chunks.push(currentChunk);
-              currentChunk = clause.slice(0, 160);
-            }
-          }
-          if (currentChunk) chunks.push(currentChunk);
-
+          // Split ONLY at natural punctuation / clause boundaries without truncating words
+          const chunks = splitSpeechIntoSentences(normalized, lang, 160);
           const parts: Buffer[] = [];
           for (const c of chunks) {
             const part = await synthesizeFallbackTTS(c, lang);
