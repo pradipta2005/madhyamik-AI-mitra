@@ -153,6 +153,7 @@ export function LiveVoiceModal({
   const committedStudentTurnRef = useRef('');
   const isSessionActiveRef = useRef(false);
   const activeUtterancesRef = useRef<Set<SpeechSynthesisUtterance>>(new Set());
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Chromium speech synthesis watchdog and voice pre-warming
   useEffect(() => {
@@ -200,7 +201,45 @@ export function LiveVoiceModal({
     });
   }, []);
 
-  // --- Sentence-by-Sentence Audio Playback Queue ---
+  const tryFallbackSpeechSynthesis = useCallback(
+    (text: string, onComplete: () => void) => {
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+        onComplete();
+        return;
+      }
+      try {
+        const utterance = new SpeechSynthesisUtterance(text);
+        activeUtterancesRef.current.add(utterance);
+        utterance.lang = language === 'bn' ? 'bn-IN' : 'en-IN';
+        const voices = window.speechSynthesis.getVoices();
+        const matchingVoice = voices.find(
+          (v) =>
+            v.lang.toLowerCase().startsWith(language === 'bn' ? 'bn' : 'en') ||
+            (language === 'bn' && v.name.toLowerCase().includes('bengali'))
+        );
+        if (matchingVoice) utterance.voice = matchingVoice;
+
+        utterance.onend = () => {
+          activeUtterancesRef.current.delete(utterance);
+          onComplete();
+        };
+        utterance.onerror = () => {
+          activeUtterancesRef.current.delete(utterance);
+          onComplete();
+        };
+
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+        window.speechSynthesis.speak(utterance);
+      } catch {
+        onComplete();
+      }
+    },
+    [language]
+  );
+
+  // --- Sentence-by-Sentence Audio Playback Queue via Real Audio / TTS ---
   const playNextSentence = useCallback(() => {
     if (isSpeakingRef.current || audioQueueRef.current.length === 0) return;
     const nextSentence = audioQueueRef.current.shift();
@@ -219,30 +258,19 @@ export function LiveVoiceModal({
       isRecognitionActiveRef.current = false;
     }
 
-    const utterance = new SpeechSynthesisUtterance(nextSentence);
-    activeUtterancesRef.current.add(utterance);
-    utterance.lang = language === 'bn' ? 'bn-IN' : 'en-IN';
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-
-    const voices = window.speechSynthesis.getVoices();
-    const matchingVoice = voices.find(
-      (v) =>
-        v.lang.toLowerCase().startsWith(language === 'bn' ? 'bn' : 'en') ||
-        (language === 'bn' && v.name.toLowerCase().includes('bengali'))
-    );
-    if (matchingVoice) {
-      utterance.voice = matchingVoice;
-    }
-
     let safetyTimer: number | null = null;
-    const onUtteranceComplete = () => {
+    let completed = false;
+
+    const onAudioComplete = () => {
+      if (completed) return;
+      completed = true;
       if (safetyTimer) {
         window.clearTimeout(safetyTimer);
         safetyTimer = null;
       }
-      activeUtterancesRef.current.delete(utterance);
+      currentAudioRef.current = null;
       isSpeakingRef.current = false;
+
       if (audioQueueRef.current.length > 0) {
         playNextSentence();
       } else {
@@ -264,23 +292,44 @@ export function LiveVoiceModal({
       }
     };
 
-    utterance.onend = onUtteranceComplete;
-    utterance.onerror = onUtteranceComplete;
-
-    // Safety watchdog: prevent stuck speaking state if Chromium drops onend
-    const maxDurationMs = Math.max(3500, nextSentence.length * 120);
+    // Safety watchdog: prevent stuck speaking state if audio stalls
+    const maxDurationMs = Math.max(4500, nextSentence.length * 140);
     safetyTimer = window.setTimeout(() => {
-      if (activeUtterancesRef.current.has(utterance)) {
-        console.warn('Speech synthesis timeout watchdog triggered.');
-        onUtteranceComplete();
-      }
+      console.warn('Audio sentence watchdog triggered.');
+      onAudioComplete();
     }, maxDurationMs);
 
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume();
+    try {
+      const audioUrl = `/api/tts-audio?text=${encodeURIComponent(nextSentence)}&lang=${language === 'bn' ? 'bn' : 'en'}`;
+      const audio = new Audio(audioUrl);
+      currentAudioRef.current = audio;
+
+      audio.onplay = () => {
+        setIsTeacherSpeaking(true);
+        energyRef.current = Math.max(energyRef.current, 0.75);
+      };
+
+      audio.ontimeupdate = () => {
+        energyRef.current = Math.max(energyRef.current, 0.55 + Math.random() * 0.35);
+      };
+
+      audio.onended = () => {
+        onAudioComplete();
+      };
+
+      audio.onerror = () => {
+        console.warn('TTS audio fetch error, falling back to browser SpeechSynthesis');
+        tryFallbackSpeechSynthesis(nextSentence, onAudioComplete);
+      };
+
+      audio.play().catch((playErr) => {
+        console.warn('Audio play() failed, trying SpeechSynthesis fallback:', playErr);
+        tryFallbackSpeechSynthesis(nextSentence, onAudioComplete);
+      });
+    } catch {
+      tryFallbackSpeechSynthesis(nextSentence, onAudioComplete);
     }
-    window.speechSynthesis.speak(utterance);
-  }, [language]);
+  }, [language, tryFallbackSpeechSynthesis]);
 
   const queueSentenceForAudio = useCallback(
     (sentence: string) => {
@@ -306,7 +355,12 @@ export function LiveVoiceModal({
       }
 
       // If teacher was speaking when student sends turn, interrupt immediately
-      if (isSpeakingRef.current) {
+      if (isSpeakingRef.current || currentAudioRef.current) {
+        if (currentAudioRef.current) {
+          currentAudioRef.current.pause();
+          currentAudioRef.current.currentTime = 0;
+          currentAudioRef.current = null;
+        }
         window.speechSynthesis.cancel();
         activeUtterancesRef.current.clear();
         audioQueueRef.current = [];
@@ -456,6 +510,11 @@ export function LiveVoiceModal({
 
   // --- Interrupt Teacher ---
   const handleInterruptTeacher = useCallback(() => {
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
+      currentAudioRef.current = null;
+    }
     window.speechSynthesis.cancel();
     activeUtterancesRef.current.clear();
     audioQueueRef.current = [];
@@ -770,6 +829,11 @@ export function LiveVoiceModal({
       cancelled = true;
       isSessionActiveRef.current = false;
       cancelAnimationFrame(rafId);
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current.currentTime = 0;
+        currentAudioRef.current = null;
+      }
       window.speechSynthesis.cancel();
       audioQueueRef.current = [];
       isSpeakingRef.current = false;
@@ -808,6 +872,11 @@ export function LiveVoiceModal({
   if (!isOpen) return null;
 
   const handleEndSession = () => {
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
+      currentAudioRef.current = null;
+    }
     window.speechSynthesis.cancel();
     isSessionActiveRef.current = false;
     onCloseAndSave(turnsRef.current);
@@ -893,6 +962,11 @@ export function LiveVoiceModal({
             <button
               type="button"
               onClick={() => {
+                if (currentAudioRef.current) {
+                  currentAudioRef.current.pause();
+                  currentAudioRef.current.currentTime = 0;
+                  currentAudioRef.current = null;
+                }
                 window.speechSynthesis.cancel();
                 setEngine((e) => (e === 'high-capacity' ? 'gemini-live' : 'high-capacity'));
               }}

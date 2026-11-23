@@ -955,6 +955,84 @@ async function startServer() {
     }
   });
 
+  const ttsAudioCache = new Map<string, Buffer>();
+
+  app.get('/api/tts-audio', async (req, res) => {
+    try {
+      const text = typeof req.query.text === 'string' ? req.query.text.trim() : '';
+      const lang = req.query.lang === 'en' ? 'en' : 'bn';
+      if (!text) {
+        res.status(400).send('Empty text');
+        return;
+      }
+
+      const normalized = formatTeacherSpeechForAudio(text.slice(0, 1500), lang);
+      if (!normalized) {
+        res.status(400).send('Empty normalized text');
+        return;
+      }
+
+      const cacheKey = `${lang}:${normalized}`;
+      const cached = ttsAudioCache.get(cacheKey);
+      if (cached) {
+        res.setHeader('Content-Type', 'audio/mpeg');
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.send(cached);
+        return;
+      }
+
+      // Split into chunks of max 150 characters for Google Translate TTS API
+      const chunks: string[] = [];
+      const words = normalized.split(/\s+/);
+      let currentChunk = '';
+      for (const word of words) {
+        if ((currentChunk + ' ' + word).trim().length <= 150) {
+          currentChunk = (currentChunk + ' ' + word).trim();
+        } else {
+          if (currentChunk) chunks.push(currentChunk);
+          currentChunk = word.slice(0, 150);
+        }
+      }
+      if (currentChunk) chunks.push(currentChunk);
+
+      const audioBuffers: Buffer[] = [];
+      for (const chunk of chunks) {
+        const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang === 'bn' ? 'bn' : 'en-IN'}&client=tw-ob&q=${encodeURIComponent(chunk)}`;
+        const ttsRes = await fetch(ttsUrl, {
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            Referer: 'https://translate.google.com/',
+          },
+          signal: AbortSignal.timeout(6000),
+        });
+        if (ttsRes.ok) {
+          const ab = await ttsRes.arrayBuffer();
+          audioBuffers.push(Buffer.from(ab));
+        }
+      }
+
+      if (audioBuffers.length === 0) {
+        res.status(502).send('Audio generation failed');
+        return;
+      }
+
+      const merged = Buffer.concat(audioBuffers);
+      if (ttsAudioCache.size > 200) {
+        const firstKey = ttsAudioCache.keys().next().value;
+        if (firstKey) ttsAudioCache.delete(firstKey);
+      }
+      ttsAudioCache.set(cacheKey, merged);
+
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.send(merged);
+    } catch (err) {
+      console.warn('TTS audio generation error:', err);
+      res.status(500).send('TTS audio generation error');
+    }
+  });
+
   app.post('/api/live-voice-turn', async (req, res) => {
     try {
       const {
