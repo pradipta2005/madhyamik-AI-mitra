@@ -1122,12 +1122,19 @@ async function startServer() {
   app.get('/api/tts-audio', async (req, res) => {
     try {
       const text = typeof req.query.text === 'string' ? req.query.text.trim() : '';
-      const lang = req.query.lang === 'en' ? 'en' : 'bn';
+      const reqLang = req.query.lang === 'en' ? 'en' : 'bn';
       const voicePref = typeof req.query.voice === 'string' ? req.query.voice.trim().toLowerCase() : undefined;
       if (!text) {
         res.status(400).send('Empty text');
         return;
       }
+
+      // Auto-detect if text contains Bengali Unicode or Banglish expressions (e.g. "kemon acho")
+      // Ensures the studio Bengali teacher voice is always selected even if req.query.lang defaulted to 'en'
+      const detectedTextLang = detectLanguage(text);
+      const hasBengaliScript = /[\u0980-\u09FF]/.test(text);
+      const isBengali = reqLang === 'bn' || hasBengaliScript || detectedTextLang === 'bn';
+      const lang: 'bn' | 'en' = isBengali ? 'bn' : 'en';
 
       const normalized = formatTeacherSpeechForAudio(text.slice(0, 1500), lang);
       if (!normalized) {

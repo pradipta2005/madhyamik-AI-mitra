@@ -40,6 +40,10 @@ test('detectLanguage recognizes Bengali Unicode script', () => {
 test('detectLanguage recognizes Banglish queries', () => {
   assert.equal(detectLanguage('Alor protisaron shohoj bhashay bojhao'), 'bn');
   assert.equal(detectLanguage('Physical Science er kichu guruttopurno proshno dao'), 'bn');
+  assert.equal(detectLanguage('kemon acho'), 'bn');
+  assert.equal(detectLanguage('tumi kemon acho'), 'bn');
+  assert.equal(detectLanguage('kemon achen'), 'bn');
+  assert.equal(detectLanguage('valo acho'), 'bn');
 });
 
 test('detectLanguage keeps English queries in English', () => {
@@ -528,6 +532,19 @@ Grammar: Voice change and phrasal verbs.`;
   assert.equal(cleaned.cleanText.includes('Koni'), false);
   assert.ok(cleaned.cleanText.includes("Father's Help"));
   assert.ok(cleaned.cleanText.includes('Fable'));
+});
+
+test('formatTeacherSpeechForAudio transliterates Banglish phrases to Bengali script for authentic pronunciation', () => {
+  const formatted = formatTeacherSpeechForAudio('kemon acho? Ami bhalo achi.', 'bn');
+  assert.ok(formatted.includes('কেমন আছো'));
+  assert.ok(formatted.includes('ভালো'));
+});
+
+test('cleanVoiceRecognitionText transliterates Banglish greetings to authentic Bengali', () => {
+  const cleaned = cleanVoiceRecognitionText('kemon acho', 'bn');
+  assert.equal(cleaned, 'কেমন আছো');
+  const cleanedTumi = cleanVoiceRecognitionText('tumi kemon acho', 'bn');
+  assert.equal(cleanedTumi, 'তুমি কেমন আছো');
 });
 
 

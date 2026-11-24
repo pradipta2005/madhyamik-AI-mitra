@@ -69,11 +69,30 @@ const BANGLISH_MARKERS = new Set([
   'kibhabe',
   'keno',
   'kothay',
+  'kokhon',
   'korbo',
   'koro',
+  'korun',
+  'korcho',
+  'korchen',
+  'korchi',
   'dao',
   'din',
   'bolo',
+  'bolun',
+  'bolcho',
+  'bolchen',
+  'dekho',
+  'dekhun',
+  'shono',
+  'sono',
+  'bujhte',
+  'bujhecho',
+  'bujhechen',
+  'parcho',
+  'parso',
+  'parchi',
+  'parsi',
   'sajeshon',
   'suggestion',
   'suggession',
@@ -83,7 +102,30 @@ const BANGLISH_MARKERS = new Set([
   'bangla',
   'amake',
   'amar',
+  'ami',
+  'amra',
+  'amader',
+  'tumi',
   'tomar',
+  'tomake',
+  'apni',
+  'apnar',
+  'apnake',
+  'tui',
+  'tor',
+  'toke',
+  'kemon',
+  'kamon',
+  'acho',
+  'achho',
+  'achen',
+  'achhen',
+  'achi',
+  'achhi',
+  'achis',
+  'bhalo',
+  'valo',
+  'khobor',
   'emon',
   'kon',
   'konta',
@@ -96,6 +138,7 @@ const BANGLISH_MARKERS = new Set([
   'ebong',
   'ar',
   'kichu',
+  'kisu',
   'adhyay',
   'odhyay',
   'upopaddo',
@@ -123,10 +166,20 @@ const BANGLISH_MARKERS = new Set([
   'mcqs',
   'saq',
   'laq',
-  'bhalo',
   'khub',
   'sob',
   'shob',
+  'dhonnobad',
+  'dhanyabad',
+  'nomoskar',
+  'namaskar',
+  'shubhechha',
+  'poriksha',
+  'porikkha',
+  'madhyamik',
+  'madhamik',
+  'sutro',
+  'sutra',
 ]);
 
 export function detectLanguage(text: string, subject?: WbbseSubject): LanguageCode {
@@ -143,6 +196,17 @@ export function detectLanguage(text: string, subject?: WbbseSubject): LanguageCo
     return 'bn';
   }
 
+  // 1. Instant check for conversational Banglish greetings & inquiries
+  if (
+    /\b(kemon|kamon)\s+(acho|achho|achen|achhen|achis|cholche|ache|achhe)\b/i.test(lower) ||
+    /\b(tumi|apni|tui)\s+(kemon|kamon|ki|kivabe|valo|bhalo)\b/i.test(lower) ||
+    /\b(bhalo|valo)\s+(acho|achho|achen|achhen|achi|achhi)\b/i.test(lower) ||
+    /\b(ki\s+khobor|ami\s+bhalo|ami\s+valo|kivabe\s+korbo|kivabe\s+porbo)\b/i.test(lower) ||
+    /\b(bujhte\s+parcho|bujhte\s+parchi|bujhiye\s+dao)\b/i.test(lower)
+  ) {
+    return 'bn';
+  }
+
   const tokens = lower
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)
@@ -154,13 +218,28 @@ export function detectLanguage(text: string, subject?: WbbseSubject): LanguageCo
       banglishHits += 1;
     }
   }
+
+  // If query is short (e.g. 1-4 tokens) and has at least 1 strong Banglish marker, treat as Bengali
+  if (tokens.length <= 4 && banglishHits >= 1) {
+    return 'bn';
+  }
+
   if (banglishHits >= 2) {
     return 'bn';
   }
+
   if (
     banglishHits === 1 &&
     tokens.some((t) =>
       [
+        'kemon',
+        'kamon',
+        'acho',
+        'achho',
+        'achen',
+        'achhen',
+        'bhalo',
+        'valo',
         'bojhao',
         'bojhhao',
         'bhashay',
@@ -181,6 +260,105 @@ export function detectLanguage(text: string, subject?: WbbseSubject): LanguageCo
     return 'bn';
   }
   return 'en';
+}
+
+export function transliterateBanglishToBengali(input: string): string {
+  if (!input || !input.trim()) return input;
+  let text = input;
+
+  // 1. Common Multi-word Banglish phrases (Greedy match first)
+  const phraseMap: Array<[RegExp, string]> = [
+    [/\btumi\s+kemon\s+(acho|achho)\b/gi, 'তুমি কেমন আছো'],
+    [/\bapni\s+kemon\s+(achen|achhen)\b/gi, 'আপনি কেমন আছেন'],
+    [/\b(kemon|kamon)\s+(acho|achho)\b/gi, 'কেমন আছো'],
+    [/\b(kemon|kamon)\s+(achen|achhen)\b/gi, 'কেমন আছেন'],
+    [/\b(kemon|kamon)\s+achis\b/gi, 'কেমন আছিস'],
+    [/\b(bhalo|valo)\s+(acho|achho)\b/gi, 'ভালো আছো'],
+    [/\b(bhalo|valo)\s+(achen|achhen)\b/gi, 'ভালো আছেন'],
+    [/\bami\s+(bhalo|valo)\s+(achi|achhi)\b/gi, 'আমি ভালো আছি'],
+    [/\bki\s+khobor\b/gi, 'কী খবর'],
+    [/\b(kivabe|kibhabe)\s+korbo\b/gi, 'কীভাবে করব'],
+    [/\b(kivabe|kibhabe)\s+porbo\b/gi, 'কীভাবে পড়ব'],
+    [/\bbujhte\s+(parcho|parso)\b/gi, 'বুঝতে পারছো'],
+    [/\bbujhte\s+(parchi|parsi)\b/gi, 'বুঝতে পারছি'],
+    [/\bbujhte\s+(parchi|parsi)\s*na\b/gi, 'বুঝতে পারছি না'],
+    [/\bbujhiye\s+(dao|din)\b/gi, 'বুঝিয়ে দাও'],
+    [/\bekdom\s+thik\b/gi, 'একদম ঠিক'],
+    [/\bkhub\s+(bhalo|valo)\b/gi, 'খুব ভালো'],
+    [/\bshuru\s+koro\b|\bsuru\s+koro\b/gi, 'শুরু করো'],
+    [/\bshuru\s+korun\b|\bsuru\s+korun\b/gi, 'শুরু করুন'],
+    [/\bkisu\s+bujhina\b|\bkichu\s+bujhina\b/gi, 'কিছু বুঝি না'],
+    [/\bkichu\s+bujhte\s+(parchi|parsi)\s*na\b/gi, 'কিছু বুঝতে পারছি না'],
+    [/\b(onek|onnek)\s+dhonnobad\b/gi, 'অনেক ধন্যবাদ'],
+  ];
+
+  for (const [pattern, rep] of phraseMap) {
+    text = text.replace(pattern, rep);
+  }
+
+  // 2. Individual Banglish Words
+  const wordMap: Array<[RegExp, string]> = [
+    [/\b(kemon|kamon)\b/gi, 'কেমন'],
+    [/\b(acho|achho)\b/gi, 'আছো'],
+    [/\b(achen|achhen)\b/gi, 'আছেন'],
+    [/\b(achi|achhi)\b/gi, 'আছি'],
+    [/\b(bhalo|valo)\b/gi, 'ভালো'],
+    [/\btumi\b/gi, 'তুমি'],
+    [/\btomar\b/gi, 'তোমার'],
+    [/\btomake\b/gi, 'তোমাকে'],
+    [/\bapni\b/gi, 'আপনি'],
+    [/\bapnar\b/gi, 'আপনার'],
+    [/\bapnake\b/gi, 'আপনাকে'],
+    [/\bami\b/gi, 'আমি'],
+    [/\bamar\b/gi, 'আমার'],
+    [/\bamake\b/gi, 'আমাকে'],
+    [/\bamra\b/gi, 'আমরা'],
+    [/\bamader\b/gi, 'আমাদের'],
+    [/\b(kivabe|kibhabe)\b/gi, 'কীভাবে'],
+    [/\bki\b/gi, 'কী'],
+    [/\bkeno\b/gi, 'কেন'],
+    [/\bkothay\b/gi, 'কোথায়'],
+    [/\bkokhon\b/gi, 'কখন'],
+    [/\b(ache|achhe)\b/gi, 'আছে'],
+    [/\bhobe\b/gi, 'হবে'],
+    [/\bholo\b/gi, 'হলো'],
+    [/\b(hocche|hoche)\b/gi, 'হচ্ছে'],
+    [/\bkorbo\b/gi, 'করব'],
+    [/\bkoro\b/gi, 'করো'],
+    [/\bkorun\b/gi, 'করুন'],
+    [/\bbolo\b/gi, 'বলো'],
+    [/\bbolun\b/gi, 'বলুন'],
+    [/\bdao\b/gi, 'দাও'],
+    [/\bdin\b/gi, 'দিন'],
+    [/\bdekho\b/gi, 'দেখো'],
+    [/\b(shono|sono)\b/gi, 'শোনো'],
+    [/\bbujhte\b/gi, 'বুঝতে'],
+    [/\b(parcho|parso)\b/gi, 'পারছো'],
+    [/\b(parchi|parsi)\b/gi, 'পারছি'],
+    [/\bsir\b/gi, 'স্যার'],
+    [/\bmadam\b/gi, 'ম্যাডাম'],
+    [/\b(dhonnobad|dhanyabad)\b/gi, 'ধন্যবাদ'],
+    [/\b(nomoskar|namaskar)\b/gi, 'নমস্কার'],
+    [/\b(shubhechha|subheccha)\b/gi, 'শুভেচ্ছা'],
+    [/\b(poriksha|porikkha)\b/gi, 'পরীক্ষা'],
+    [/\b(madhyamik|madhamik)\b/gi, 'মাধ্যমিক'],
+    [/\b(proshno|prosno)\b/gi, 'প্রশ্ন'],
+    [/\buttor\b/gi, 'উত্তর'],
+    [/\b(sutro|sutra)\b/gi, 'সূত্র'],
+    [/\b(upopaddo|upopadya)\b/gi, 'উপপাদ্য'],
+    [/\b(shongga|songga)\b/gi, 'সংজ্ঞা'],
+    [/\budahoron\b/gi, 'উদাহরণ'],
+    [/\bebong\b/gi, 'এবং'],
+    [/\bothoba\b/gi, 'অথবা'],
+    [/\bkaron\b/gi, 'কারণ'],
+    [/\b(orthat|orthe)\b/gi, 'অর্থাৎ'],
+  ];
+
+  for (const [pattern, rep] of wordMap) {
+    text = text.replace(pattern, rep);
+  }
+
+  return text;
 }
 
 export function deduplicateConsecutiveWords(text: string): string {
@@ -248,6 +426,8 @@ export function cleanVoiceRecognitionText(raw: string, lang: LanguageCode): stri
   let text = raw.trim();
 
   if (lang === 'bn') {
+    // Transliterate common Banglish conversational phrases and greetings into authentic Bengali script
+    text = transliterateBanglishToBengali(text);
     const bnReplacements: [RegExp, string][] = [
       [/(?<![\p{L}\p{N}])মাদ্যমিক(?![\p{L}\p{N}])/gui, 'মাধ্যমিক'],
       [/(?<![\p{L}\p{N}])উপপাদ(?![\p{L}\p{N}])/gui, 'উপপাদ্য'],
@@ -1183,6 +1363,7 @@ export function formatTeacherSpeechForAudio(
 
   // 2. Math & Physics combined formulas and superscripts/subscripts BEFORE markdown stripping
   if (language === 'bn') {
+    text = transliterateBanglishToBengali(text);
     text = text
       .replace(/P_?1\s*V_?1\s*=\s*P_?2\s*V_?2/gi, 'পি ওয়ান ভি ওয়ান সমান পি টু ভি টু')
       .replace(/P_?1\s*\/\s*T_?1\s*=\s*P_?2\s*\/\s*T_?2/gi, 'পি ওয়ান বাই টি ওয়ান সমান পি টু বাই টি টু')
