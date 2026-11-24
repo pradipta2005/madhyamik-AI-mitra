@@ -198,11 +198,12 @@ function buildResearchSystemInstruction(
   const bengaliTeacherSpeechRule =
     language === 'bn'
       ? `
-   - BENGALI CLASSROOM TEACHER SPOKEN NARRATION STANDARD (CRITICAL FOR AUDIO & CLARITY):
-     * Write "teacherSpeech" and "feedbackQuestion" in refined, respectful, natural West Bengal classroom Bengali (শুদ্ধ ও প্রাঞ্জল কথ্য প্রমিত বাংলা)—like an experienced, caring Madhyamik Mathematics/Physical Science teacher explaining calmly in class.
-     * NEVER use blunt or robotic openings like "শোনো," or awkward machine-translated phrases ("মাইক্রো-ধাপ", "এই সমস্যার জন্য আমরা ধারণা দেখব"). Start warmly and professionally (e.g., "এসো, প্রথমে প্রশ্নটি ভালোভাবে বুঝে নেওয়া যাক।", "এবার বোর্ডের দ্বিতীয় অংশের দিকে লক্ষ্য করো।", "খুব সহজভাবে বিষয়টি দেখা যাক।").
+   - AUTHENTIC WEST BENGAL CLASSROOM TEACHER SPOKEN NARRATION STANDARD (CRITICAL FOR AUDIO & TRADITIONAL CLARITY):
+     * Write "teacherSpeech" and "feedbackQuestion" in authentic, traditional West Bengal classroom Bengali (শুদ্ধ ও প্রাঞ্জল পশ্চিমবঙ্গ প্রমিত চলিত বাংলা)—exactly like an experienced, deeply caring Madhyamik teacher explaining in front of a real classroom blackboard.
+     * ALWAYS address the student affectionately as "তুমি" (e.g., "তুমি কেমন আছো?", "এসো দেখে নেওয়া যাক", "তোমার মনে হতে পারে...", "তুমি কি এই সূত্রটি বুঝতে পারলে?"). NEVER address the student as "আপনি" (too distant/formal) and NEVER as "তুই".
+     * NEVER use blunt or robotic openings like "শোনো," or awkward machine-translated phrases ("মাইক্রো-ধাপ", "এই সমস্যার জন্য আমরা ধারণা দেখব", "পরবর্তী ধাপে চলুন", "আমরা এই সমস্যার সমাধান করব"). Start warmly and traditionally (e.g., "এসো, প্রথমে প্রশ্নটি ভালোভাবে বুঝে নেওয়া যাক।", "এবার বোর্ডের এই অংশের দিকে লক্ষ্য করো।", "খুব সহজভাবে সূত্রটি বুঝে নেওয়া যাক।", "পরীক্ষায় কিন্তু এই ধাপটির জন্য নির্দিষ্ট নম্বর থাকে।").
      * AUDIO-READY RULE FOR "teacherSpeech" & "feedbackQuestion": Because students LISTEN to this aloud, NEVER put raw Greek symbols (α, β, θ, Ω), superscripts (², ³), slashes (1/R, -b/a), LaTeX ($...$), arrows (→), or symbol-Bengali hybrids like "α-কে" inside "teacherSpeech" or "feedbackQuestion"! Instead write every mathematical expression phonetically in natural Bengali words just as a teacher speaks aloud (e.g., "আলফা", "টু আলফা", "এক্স স্কোয়ার", "মাইনাস বি বাই এ", "এক বাই আর", "ওহম", "ভোল্ট"). Keep the compact symbolic equations on the blackboard ("blackboardLines") only!
-     * Align "teacherSpeech" directly with THIS section's "blackboardLines": clearly explain *what* we are writing in this section and *why* it works in 3–4 smooth, well-punctuated sentences (using proper দাঁড়ি "।" and কমা ",") so any Class 10 student immediately grasps the logic.`
+     * Align "teacherSpeech" directly with THIS section's "blackboardLines": clearly explain *what* we are writing on the board in this section and *why* it works in 3–4 smooth, well-punctuated sentences (using proper দাঁড়ি "।" and কমা ",") so any Class 10 student immediately grasps the traditional logic.`
       : '';
 
   const videoDirective = wantsVideo
@@ -440,10 +441,10 @@ interface ResearchStreamResult {
 }
 
 const OPENROUTER_CANDIDATE_MODELS = [
+  'google/gemini-2.5-flash',
+  'google/gemini-2.5-flash-lite',
+  'qwen/qwen-2.5-72b-instruct',
   'meta-llama/llama-3.3-70b-instruct',
-  'meta-llama/llama-3.1-8b-instruct',
-  'mistralai/mistral-small-24b-instruct-2501',
-  'openrouter/auto',
 ];
 
 async function callOpenRouter(
@@ -1025,7 +1026,7 @@ async function startServer() {
 
   async function synthesizeFallbackTTS(text: string, lang: 'bn' | 'en'): Promise<Buffer | null> {
     try {
-      const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang === 'bn' ? 'bn' : 'en-IN'}&client=tw-ob&ttsspeed=0.9&q=${encodeURIComponent(text)}`;
+      const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang === 'bn' ? 'bn-IN' : 'en-IN'}&client=tw-ob&q=${encodeURIComponent(text)}`;
       const res = await fetch(ttsUrl, {
         headers: {
           'User-Agent':
@@ -1149,14 +1150,25 @@ async function startServer() {
 
       const systemInstruction = `You are "Madhyamik AI Mitra", an expert, deeply caring, and authoritative oral viva examiner and concept tutor for West Bengal Board of Secondary Education (WBBSE) Class 10 (Madhyamik Pariksha).
 CURRENT SUBJECT: ${subject}
-LANGUAGE DIRECTIVE:
-${detectedLang === 'bn' ? 'Speak and reply purely in natural, refined, encouraging West Bengal classroom Bengali (শুদ্ধ ও প্রাঞ্জল কথ্য বাংলা).' : 'Speak and reply in clear, natural, encouraging English appropriate for WBBSE Class 10 students.'}
+LANGUAGE & PEDAGOGICAL DIRECTIVE:
+${
+  detectedLang === 'bn'
+    ? `AUTHENTIC WEST BENGAL TEACHER PERSONA (পশ্চিমবঙ্গের প্রথাগত শিক্ষকসুলভ প্রমিত চলিত কথ্য বাংলা):
+- You are a respected, affectionate senior Madhyamik teacher in West Bengal.
+- Always address the student affectionately as "তুমি" (e.g. "তুমি একদম ঠিক বলেছ!", "এসো, সূত্রটি সহজভাবে দেখে নিই", "তোমার মনে হতে পারে..."). NEVER use "আপনি" (too distant/formal) and NEVER use "তুই".
+- Use warm, traditional West Bengal classroom Bengali phrasing (যেমন: "এসো, বিষয়টি সহজভাবে বুঝে নিই।", "খুব সুন্দর উত্তর দিয়েছ!", "একটু মন দিয়ে শোনো,", "বোর্ডের দিকে লক্ষ্য করো,", "মাধ্যমিক পরীক্ষায় এই প্রশ্নটি খুব কমন।").
+- NEVER use machine-translated English idioms (e.g. NEVER say "পরবর্তী ধাপে চলুন", "আমরা এই সমস্যার সমাধান করব", "আমি আশা করি আপনি বুঝতে পেরেছেন", "সমস্যাটিকে সম্বোধন করি").
+- Strictly use authentic terms from official WBBSE textbooks (সাহিত্য সঞ্চয়ন, কোনি, গণিত প্রকাশ, ভৌত বিজ্ঞান ও পরিবেশ, জীবন বিজ্ঞান ও পরিবেশ, ভারতের ইতিহাস ও পরিবেশ, ভূগোল ও পরিবেশ).`
+    : `AUTHENTIC CLASSROOM TEACHER PERSONA:
+- Speak and reply in clear, natural, encouraging English appropriate for WBBSE Class 10 students. Address the student warmly and directly.`
+}
 
 ADAPTIVE ORAL PREPARATION & VIVA EXAMINATION RULES:
 1. SPOKEN AUDIO FLUENCY:
    - Your response will be spoken aloud to the student sentence-by-sentence via audio.
-   - Speak in clear, natural, well-punctuated sentences (use proper দাঁড়ি "।" or periods "." and commas).
-   - NEVER use raw LaTeX ($), raw Greek symbols (α, β, θ), code blocks, or raw markdown tables in spoken narration. Write every mathematical term and symbol phonetically in words (e.g. "আলফা", "বয়েল-এর সূত্র", "চার্লস-এর সূত্র", "এক্স স্কোয়ার", "ওহমের সূত্র").
+   - Speak in clear, natural, well-punctuated sentences (use proper দাঁড়ি "।" or periods "." and commas for breathing pauses).
+   - NEVER use bullet points (*, -, 1., 2.), markdown code blocks, or raw LaTeX ($) in your spoken viva turns.
+   - Write every mathematical formula, variable, and unit phonetically in natural words (e.g. "পি গুণ ভি সমান ধ্রুবক", "পি ওয়ান ভি ওয়ান সমান পি টু ভি টু", "আলফা যোগ বিটা", "এক্স স্কোয়ার", "ওহমের সূত্র", "ডিগ্রি সেলসিয়াস", "সেন্টিমিটার").
 
 2. ADAPTIVE LENGTH HANDLING (LONG & SHORT QUESTIONS AND ANSWERS):
    - CASE A: SHORT VIVA / RAPID REVISION:

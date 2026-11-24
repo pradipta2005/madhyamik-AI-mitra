@@ -325,6 +325,15 @@ test('formatTeacherSpeechForAudio normalizes Greek letters, math symbols, and La
   assert.ok(enOut.includes('squared'));
   assert.ok(enOut.includes('equals'));
   assert.ok(enOut.includes('ohm'));
+
+  const mathScienceOut = formatTeacherSpeechForAudio(
+    'বয়েলের সূত্রে $P_1V_1 = P_2V_2$ এবং ওহমের সূত্রে $V = IR$ মনে রাখবে। সমীকরণ $ax^2 + bx + c = 0$ এ $b^2 - 4ac$ নিরূপক।',
+    'bn'
+  );
+  assert.ok(mathScienceOut.includes('পি ওয়ান ভি ওয়ান সমান পি টু ভি টু'));
+  assert.ok(mathScienceOut.includes('ভি সমান আই আর'));
+  assert.ok(mathScienceOut.includes('এ এক্স স্কোয়ার যোগ বি এক্স যোগ সি সমান শূন্য'));
+  assert.equal(mathScienceOut.includes('$'), false);
 });
 
 test('splitSpeechIntoSentences splits paragraphs into clean sentences without dropping text or breaking numbers', () => {

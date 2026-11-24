@@ -1181,7 +1181,37 @@ export function formatTeacherSpeechForAudio(
   // 1. Clean markdown links [label](url) -> label
   text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
 
-  // 2. Normalize LaTeX macros before stripping delimiters
+  // 2. Math & Physics combined formulas and superscripts/subscripts BEFORE markdown stripping
+  if (language === 'bn') {
+    text = text
+      .replace(/P_?1\s*V_?1\s*=\s*P_?2\s*V_?2/gi, 'পি ওয়ান ভি ওয়ান সমান পি টু ভি টু')
+      .replace(/P_?1\s*\/\s*T_?1\s*=\s*P_?2\s*\/\s*T_?2/gi, 'পি ওয়ান বাই টি ওয়ান সমান পি টু বাই টি টু')
+      .replace(/V_?1\s*\/\s*T_?1\s*=\s*V_?2\s*\/\s*T_?2/gi, 'ভি ওয়ান বাই টি ওয়ান সমান ভি টু বাই টি টু')
+      .replace(/P\s*\*\s*V\s*=\s*k|P\s*V\s*=\s*k|P\s*V\s*=\s*ধ্রুবক/gi, 'পি গুণ ভি সমান ধ্রুবক')
+      .replace(/V\s*\/\s*T\s*=\s*k/gi, 'ভি বাই টি সমান ধ্রুবক')
+      .replace(/PV\s*=\s*nRT/gi, 'পি ভি সমান এন আর টি')
+      .replace(/V\s*=\s*IR/gi, 'ভি সমান আই আর')
+      .replace(/I\s*=\s*V\s*\/\s*R/gi, 'আই সমান ভি বাই আর')
+      .replace(/b\^?2\s*-\s*4ac|b²\s*-\s*4ac/gi, 'বি স্কোয়ার মাইনাস চার এ সি')
+      .replace(/ax\^?2\s*\+\s*bx\s*\+\s*c\s*=\s*0/gi, 'এ এক্স স্কোয়ার যোগ বি এক্স যোগ সি সমান শূন্য')
+      .replace(/\^2|²/g, ' স্কোয়ার')
+      .replace(/\^3|³/g, ' কিউব')
+      .replace(/_1|₁/g, ' ওয়ান')
+      .replace(/_2|₂/g, ' টু')
+      .replace(/_0|₀/g, ' শূন্য');
+  } else {
+    text = text
+      .replace(/P_?1\s*V_?1\s*=\s*P_?2\s*V_?2/gi, 'P 1 V 1 equals P 2 V 2')
+      .replace(/PV\s*=\s*nRT/gi, 'P V equals n R T')
+      .replace(/V\s*=\s*IR/gi, 'V equals I R')
+      .replace(/\^2|²/g, ' squared')
+      .replace(/\^3|³/g, ' cubed')
+      .replace(/_1|₁/g, ' 1')
+      .replace(/_2|₂/g, ' 2')
+      .replace(/_0|₀/g, ' 0');
+  }
+
+  // 3. Normalize LaTeX macros before stripping delimiters
   if (language === 'bn') {
     text = text
       .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$1 বাই $2')
@@ -1229,7 +1259,7 @@ export function formatTeacherSpeechForAudio(
   // Strip remaining LaTeX backslash commands
   text = text.replace(/\\[a-zA-Z]+/g, ' ');
 
-  // 3. Strip markdown syntax
+  // 4. Strip markdown syntax
   text = text
     .replace(/\$\$/g, ' ')
     .replace(/\$/g, ' ')
@@ -1250,6 +1280,31 @@ export function formatTeacherSpeechForAudio(
       [/PYQ/gi, 'বিগত বছরের প্রশ্ন'],
       [/(\d+)\s*Marks?/gi, '$1 নম্বর'],
       [/Class\s*10|Class\s*X/gi, 'দশম শ্রেণি'],
+      // Common exam structural terms
+      [/\bStep\s*(\d+)/gi, '$1 নম্বর ধাপ'],
+      [/\bSection\s*(\d+)/gi, '$1 নম্বর অংশ'],
+      [/\bQuestion\s*(\d+)/gi, '$1 নম্বর প্রশ্ন'],
+      [/\bCase\s*([A-Za-z0-9]+)/gi, 'ক্ষেত্র $1'],
+      // Physics & Math combined formulas
+      [/P_?1\s*V_?1\s*=\s*P_?2\s*V_?2/gi, 'পি ওয়ান ভি ওয়ান সমান পি টু ভি টু'],
+      [/P\s*\*\s*V\s*=\s*k|P\s*V\s*=\s*k|P\s*V\s*=\s*ধ্রুবক/gi, 'পি গুণ ভি সমান ধ্রুবক'],
+      [/V_?1\s*\/\s*T_?1\s*=\s*V_?2\s*\/\s*T_?2/gi, 'ভি ওয়ান বাই টি ওয়ান সমান ভি টু বাই টি টু'],
+      [/V\s*\/\s*T\s*=\s*k/gi, 'ভি বাই টি সমান ধ্রুবক'],
+      [/PV\s*=\s*nRT/gi, 'পি ভি সমান এন আর টি'],
+      [/V\s*=\s*IR/gi, 'ভি সমান আই আর'],
+      [/I\s*=\s*V\s*\/\s*R/gi, 'আই সমান ভি বাই আর'],
+      [/ax\^?2\s*\+\s*bx\s*\+\s*c\s*=\s*0/gi, 'এ এক্স স্কোয়ার যোগ বি এক্স যোগ সি সমান শূন্য'],
+      // Subscripts and variables
+      [/\bP_?1\b|P₁/g, 'পি ওয়ান'],
+      [/\bP_?2\b|P₂/g, 'পি টু'],
+      [/\bV_?1\b|V₁/g, 'ভি ওয়ান'],
+      [/\bV_?2\b|V₂/g, 'ভি টু'],
+      [/\bT_?1\b|T₁/g, 'টি ওয়ান'],
+      [/\bT_?2\b|T₂/g, 'টি টু'],
+      [/\bI_?1\b|I₁/g, 'আই ওয়ান'],
+      [/\bI_?2\b|I₂/g, 'আই টু'],
+      [/\bR_?1\b|R₁/g, 'আর ওয়ান'],
+      [/\bR_?2\b|R₂/g, 'আর টু'],
       // Common Chemistry & Physics terms
       [/\bCO2\b|CO₂/g, 'কার্বন ডাই অক্সাইড'],
       [/\bH2O\b|H₂O/g, 'জল'],
@@ -1261,13 +1316,39 @@ export function formatTeacherSpeechForAudio(
       [/\bHCl\b/g, 'হাইড্রোক্লোরিক অ্যাসিড'],
       [/\bCaCO3\b|CaCO₃/g, 'ক্যালসিয়াম কার্বনেট'],
       [/\bNH3\b|NH₃/g, 'অ্যামোনিয়া'],
-      // Subscripts and variables
-      [/\bP_?1\b|P₁/g, 'পি ওয়ান'],
-      [/\bP_?2\b|P₂/g, 'পি টু'],
-      [/\bV_?1\b|V₁/g, 'ভি ওয়ান'],
-      [/\bV_?2\b|V₂/g, 'ভি টু'],
-      [/\bT_?1\b|T₁/g, 'টি ওয়ান'],
-      [/\bT_?2\b|T₂/g, 'টি টু'],
+      // Trigonometric functions
+      [/\bsin\b/gi, 'সাইন'],
+      [/\bcos\b/gi, 'কস'],
+      [/\btan\b/gi, 'ট্যান'],
+      [/\bcot\b/gi, 'কট'],
+      [/\bsec\b/gi, 'সেক'],
+      [/\bcosec\b/gi, 'কোসেক'],
+      // Units
+      [/\bcm\b/gi, 'সেন্টিমিটার'],
+      [/\bmm\b/gi, 'মিলিমিটার'],
+      [/\bkm\b/gi, 'কিলোমিটার'],
+      [/\bkg\b/gi, 'কিলোগ্রাম'],
+      [/\bsec\b/gi, 'সেকেন্ড'],
+      [/\bmin\b/gi, 'মিনিট'],
+      [/\batm\b/gi, 'বায়ুমণ্ডলীয় চাপ'],
+      // Single-letter isolated math/science variables
+      [/\bP\b/g, 'পি'],
+      [/\bV\b/g, 'ভি'],
+      [/\bT\b/g, 'টি'],
+      [/\bk\b/g, 'কে'],
+      [/\bR\b/g, 'আর'],
+      [/\bI\b/g, 'আই'],
+      [/\bx\b/g, 'এক্স'],
+      [/\by\b/g, 'ওয়াই'],
+      [/\bz\b/g, 'জেড'],
+      [/\ba\b/g, 'এ'],
+      [/\bb\b/g, 'বি'],
+      [/\bc\b/g, 'সি'],
+      [/\bm\b/g, 'এম'],
+      [/\bn\b/g, 'এন'],
+      [/\bd\b/g, 'ডি'],
+      [/\bh\b/g, 'এইচ'],
+      [/\br\b/g, 'আর'],
       [/α/g, 'আলফা'],
       [/β/g, 'বিটা'],
       [/γ/g, 'গামা'],
