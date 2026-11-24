@@ -1192,8 +1192,34 @@ export function formatTeacherSpeechForAudio(
       .replace(/PV\s*=\s*nRT/gi, 'পি ভি সমান এন আর টি')
       .replace(/V\s*=\s*IR/gi, 'ভি সমান আই আর')
       .replace(/I\s*=\s*V\s*\/\s*R/gi, 'আই সমান ভি বাই আর')
+      .replace(/H\s*=\s*I\^?2\s*R\s*t/gi, 'এইচ সমান আই স্কোয়ার আর টি')
+      .replace(/P\s*=\s*VI/gi, 'পি সমান ভি গুণ আই')
+      .replace(/W\s*=\s*VQ/gi, 'ডব্লিউ সমান ভি গুণ কিউ')
+      .replace(/M\s*=\s*2D|M\s*=\s*2d/gi, 'এম সমান টু ডি')
       .replace(/b\^?2\s*-\s*4ac|b²\s*-\s*4ac/gi, 'বি স্কোয়ার মাইনাস চার এ সি')
       .replace(/ax\^?2\s*\+\s*bx\s*\+\s*c\s*=\s*0/gi, 'এ এক্স স্কোয়ার যোগ বি এক্স যোগ সি সমান শূন্য')
+      .replace(/°\s*C|℃/gi, ' ডিগ্রি সেলসিয়াস')
+      .replace(/°|º/g, ' ডিগ্রি')
+      .replace(/CH_?4|CH₄/gi, 'মিথেন')
+      .replace(/H_?2\s*SO_?4|H₂SO₄/gi, 'সালফিউরিক অ্যাসিড')
+      .replace(/C_?2\s*H_?6|C₂H₆/gi, 'ইথেন')
+      .replace(/C_?2\s*H_?4|C₂H₄/gi, 'ইথিলিন')
+      .replace(/C_?2\s*H_?2|C₂H₂/gi, 'অ্যাসিটিলিন')
+      .replace(/HN\s*O_?3|HNO₃/gi, 'নাইট্রিক অ্যাসিড')
+      .replace(/Ca\s*CO_?3|CaCO₃/gi, 'ক্যালসিয়াম কার্বনেট')
+      .replace(/Cu\s*SO_?4|CuSO₄/gi, 'কপার সালফেট')
+      .replace(/Fe\s*SO_?4|FeSO₄/gi, 'ফেরাস সালফেট')
+      .replace(/Zn\s*SO_?4|ZnSO₄/gi, 'জিঙ্ক সালফেট')
+      .replace(/CO_?2|CO₂/gi, 'কার্বন ডাই অক্সাইড')
+      .replace(/H_?2\s*O|H₂O/gi, 'জল')
+      .replace(/SO_?2|SO₂/gi, 'সালফার ডাই অক্সাইড')
+      .replace(/NH_?3|NH₃/gi, 'অ্যামোনিয়া')
+      .replace(/Cl_?2|Cl₂/gi, 'ক্লোরিন')
+      .replace(/Br_?2|Br₂/gi, 'ব্রোমিন')
+      .replace(/I_?2|I₂/gi, 'আয়োডিন')
+      .replace(/O_?2|O₂/gi, 'অক্সিজেন')
+      .replace(/N_?2|N₂/gi, 'নাইট্রোজেন')
+      .replace(/H_?2|H₂/gi, 'হাইড্রোজেন')
       .replace(/\^2|²/g, ' স্কোয়ার')
       .replace(/\^3|³/g, ' কিউব')
       .replace(/_1|₁/g, ' ওয়ান')
@@ -1312,10 +1338,24 @@ export function formatTeacherSpeechForAudio(
       [/\bN2\b|N₂/g, 'নাইট্রোজেন'],
       [/\bH2\b|H₂/g, 'হাইড্রোজেন'],
       [/\bSO2\b|SO₂/g, 'সালফার ডাই অক্সাইড'],
+      [/\bCH4\b|CH₄/g, 'মিথেন'],
+      [/\bC2H6\b|C₂H₆/g, 'ইথেন'],
+      [/\bC2H4\b|C₂H₄/g, 'ইথিলিন'],
+      [/\bC2H2\b|C₂H₂/g, 'অ্যাসিটিলিন'],
+      [/\bH2SO4\b|H₂SO₄/g, 'সালফিউরিক অ্যাসিড'],
+      [/\bHNO3\b|HNO₃/g, 'নাইট্রিক অ্যাসিড'],
+      [/\bNaOH\b/g, 'সোডিয়াম হাইড্রোক্সাইড'],
+      [/\bKOH\b/g, 'পটাশিয়াম হাইড্রোক্সাইড'],
       [/\bNaCl\b/g, 'সোডিয়াম ক্লোরাইড'],
       [/\bHCl\b/g, 'হাইড্রোক্লোরিক অ্যাসিড'],
       [/\bCaCO3\b|CaCO₃/g, 'ক্যালসিয়াম কার্বনেট'],
+      [/\bCuSO4\b|CuSO₄/g, 'কপার সালফেট'],
+      [/\bFeSO4\b|FeSO₄/g, 'ফেরাস সালফেট'],
+      [/\bZnSO4\b|ZnSO₄/g, 'জিঙ্ক সালফেট'],
       [/\bNH3\b|NH₃/g, 'অ্যামোনিয়া'],
+      [/\bCl2\b|Cl₂/g, 'ক্লোরিন'],
+      [/\bBr2\b|Br₂/g, 'ব্রোমিন'],
+      [/\bI2\b|I₂/g, 'আয়োডিন'],
       // Trigonometric functions
       [/\bsin\b/gi, 'সাইন'],
       [/\bcos\b/gi, 'কস'],

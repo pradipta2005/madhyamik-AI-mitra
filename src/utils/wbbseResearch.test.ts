@@ -327,11 +327,15 @@ test('formatTeacherSpeechForAudio normalizes Greek letters, math symbols, and La
   assert.ok(enOut.includes('ohm'));
 
   const mathScienceOut = formatTeacherSpeechForAudio(
-    'বয়েলের সূত্রে $P_1V_1 = P_2V_2$ এবং ওহমের সূত্রে $V = IR$ মনে রাখবে। সমীকরণ $ax^2 + bx + c = 0$ এ $b^2 - 4ac$ নিরূপক।',
+    'বয়েলের সূত্রে $P_1V_1 = P_2V_2$ এবং ওহমের সূত্রে $V = IR$ মনে রাখবে। সমীকরণ $ax^2 + bx + c = 0$ এ $b^2 - 4ac$ নিরূপক। এছাড়া $H = I^2Rt$, $M = 2D$, $CH_4$ এবং $H_2SO_4$ বিক্রিয়া করে।',
     'bn'
   );
   assert.ok(mathScienceOut.includes('পি ওয়ান ভি ওয়ান সমান পি টু ভি টু'));
   assert.ok(mathScienceOut.includes('ভি সমান আই আর'));
+  assert.ok(mathScienceOut.includes('এইচ সমান আই স্কোয়ার আর টি'));
+  assert.ok(mathScienceOut.includes('এম সমান টু ডি'));
+  assert.ok(mathScienceOut.includes('মিথেন'));
+  assert.ok(mathScienceOut.includes('সালফিউরিক অ্যাসিড'));
   assert.ok(mathScienceOut.includes('এ এক্স স্কোয়ার যোগ বি এক্স যোগ সি সমান শূন্য'));
   assert.equal(mathScienceOut.includes('$'), false);
 });

@@ -18,6 +18,7 @@ import {
   type LiveServerMessage,
 } from '@google/genai';
 import { WebSocketServer, type WebSocket } from 'ws';
+import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 import type {
   BlackboardSectionSnapshot,
   GroundingLink,
@@ -971,6 +972,79 @@ async function startServer() {
 
   const ttsAudioCache = new Map<string, Buffer>();
 
+  async function synthesizeEdgeTTS(
+    text: string,
+    lang: 'bn' | 'en',
+    voicePreference?: string
+  ): Promise<Buffer | null> {
+    let tts: MsEdgeTTS | null = null;
+    try {
+      tts = new MsEdgeTTS({ connectionTimeoutMs: 12000, synthesisTimeoutMs: 25000 });
+      let voice = lang === 'bn' ? 'bn-IN-BashkarNeural' : 'en-IN-PrabhatNeural';
+      if (voicePreference === 'female' || voicePreference === 'tanishaa') {
+        voice = lang === 'bn' ? 'bn-IN-TanishaaNeural' : 'en-IN-NeerjaNeural';
+      }
+      await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+      const { audioStream } = tts.toStream(text);
+      const chunks: Buffer[] = [];
+      return await new Promise<Buffer | null>((resolve) => {
+        let settled = false;
+        const timer = setTimeout(() => {
+          if (!settled) {
+            settled = true;
+            try {
+              tts?.close();
+            } catch {
+              // ignore
+            }
+            resolve(null);
+          }
+        }, 25000);
+
+        audioStream.on('data', (chunk: Buffer) => {
+          chunks.push(chunk);
+        });
+        audioStream.on('end', () => {
+          if (!settled) {
+            settled = true;
+            clearTimeout(timer);
+            try {
+              tts?.close();
+            } catch {
+              // ignore
+            }
+            if (chunks.length > 0) {
+              resolve(Buffer.concat(chunks));
+            } else {
+              resolve(null);
+            }
+          }
+        });
+        audioStream.on('error', (err) => {
+          if (!settled) {
+            settled = true;
+            clearTimeout(timer);
+            try {
+              tts?.close();
+            } catch {
+              // ignore
+            }
+            console.warn('Edge TTS streaming error:', err);
+            resolve(null);
+          }
+        });
+      });
+    } catch (err) {
+      console.warn('Edge TTS synthesis failed:', err);
+      try {
+        tts?.close();
+      } catch {
+        // ignore
+      }
+      return null;
+    }
+  }
+
   async function synthesizeGoogleCloudTTS(text: string, lang: 'bn' | 'en'): Promise<Buffer | null> {
     const apiKey = process.env.GOOGLE_TTS_API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) return null;
@@ -1049,6 +1123,7 @@ async function startServer() {
     try {
       const text = typeof req.query.text === 'string' ? req.query.text.trim() : '';
       const lang = req.query.lang === 'en' ? 'en' : 'bn';
+      const voicePref = typeof req.query.voice === 'string' ? req.query.voice.trim().toLowerCase() : undefined;
       if (!text) {
         res.status(400).send('Empty text');
         return;
@@ -1060,7 +1135,7 @@ async function startServer() {
         return;
       }
 
-      const cacheKey = `${lang}:${normalized}`;
+      const cacheKey = `${lang}:${voicePref || 'default'}:${normalized}`;
       const cached = ttsAudioCache.get(cacheKey);
       if (cached) {
         res.setHeader('Content-Type', 'audio/mpeg');
@@ -1069,13 +1144,18 @@ async function startServer() {
         return;
       }
 
-      // 1. Try Google Cloud Neural2 or ElevenLabs for human studio speech
-      let audioBuffer = await synthesizeGoogleCloudTTS(normalized, lang);
+      // 1. Primary: Microsoft Edge 24kHz Studio Neural Voice (bn-IN-BashkarNeural / bn-IN-TanishaaNeural / en-IN-PrabhatNeural)
+      let audioBuffer = await synthesizeEdgeTTS(normalized, lang, voicePref);
+
+      // 2. Secondary: Google Cloud Neural2 or ElevenLabs
+      if (!audioBuffer) {
+        audioBuffer = await synthesizeGoogleCloudTTS(normalized, lang);
+      }
       if (!audioBuffer) {
         audioBuffer = await synthesizeElevenLabsTTS(normalized);
       }
 
-      // 2. If studio cloud voice is not enabled, use enhanced calm fallback
+      // 3. Fallback: Google Translate only if studio neural voices are unreachable
       if (!audioBuffer) {
         if (normalized.length <= 160) {
           audioBuffer = await synthesizeFallbackTTS(normalized, lang);
@@ -1098,7 +1178,7 @@ async function startServer() {
         return;
       }
 
-      if (ttsAudioCache.size > 200) {
+      if (ttsAudioCache.size > 500) {
         const firstKey = ttsAudioCache.keys().next().value;
         if (firstKey) ttsAudioCache.delete(firstKey);
       }
@@ -1764,14 +1844,18 @@ ${pyqContext}`;
 
     try {
       const ai = getAiClient();
-      const systemInstruction = `You are "Madhyamik AI Mitra", a warm, patient, encouraging West Bengal Board of Secondary Education (WBBSE) Class 10 oral examiner and concept tutor.
+      const systemInstruction = `You are "Madhyamik AI Mitra", a deeply caring, experienced, and authoritative West Bengal Board of Secondary Education (WBBSE) Class 10 oral viva examiner and concept tutor.
 Subject Focus: ${subject}.
 Preferred Starting Language: ${lang === 'bn' ? 'Bengali (বাংলা)' : 'English'}.
-Rules:
-1. You are fluent in both natural Bengali (বাংলা) and English. Mirror whichever language the student speaks in—if they speak Bengali, reply in clear Bengali; if they speak English, reply in English.
-2. Keep spoken responses concise, conversational, and easy to follow over audio (2–4 sentences per turn unless explaining a step-by-step concept).
-3. You can explain Madhyamik concepts verbally with everyday examples OR quiz the student with 1-mark and 2-mark viva questions, praising good answers and gently correcting mistakes.
-4. Start by briefly greeting the student warmly and asking what topic or subject they want to practice today.`;
+Pedagogical Directives:
+1. Bengali Persona: When speaking Bengali, speak exclusively in authentic, traditional West Bengal classroom Bengali (শুদ্ধ ও প্রাঞ্জল পশ্চিমবঙ্গ প্রমিত চলিত কথ্য বাংলা).
+2. ALWAYS address the student affectionately as "তুমি" (e.g. "তুমি কেমন আছো?", "এসো, সূত্রটি সহজভাবে দেখে নিই", "তোমার উত্তর খুব সুন্দর হয়েছে!"). NEVER address the student as "আপনি" (too distant) or "তুই".
+3. Use traditional classroom teacher phrasing (যেমন: "এসো, বিষয়টি সহজভাবে বুঝে নিই।", "খুব সুন্দর উত্তর দিয়েছ!", "মন দিয়ে শোনো,", "বোর্ডের দিকে লক্ষ্য করো,", "মাধ্যমিক পরীক্ষার জন্য এটি খুব কমন।").
+4. Never use literal machine-translated English idioms (e.g. NEVER say "পরবর্তী ধাপে চলুন", "আমরা এই সমস্যার সমাধান করব", "আমি আশা করি আপনি বুঝতে পেরেছেন").
+5. Spoken clarity: Write mathematical formulas, chemical formulas, and variables phonetically in natural words (e.g. "পি গুণ ভি সমান ধ্রুবক", "ভি সমান আই আর", "আলফা", "এক্স স্কোয়ার", "ওহমের সূত্র").
+6. Mirror whichever language the student speaks in—if they speak Bengali, reply in clear Bengali; if they speak English, reply in natural English.
+7. Keep spoken responses conversational and easy to follow over audio (2–4 sentences per turn unless explaining a step-by-step 5-mark question).
+8. Start by briefly greeting the student warmly and asking what chapter or topic they want to practice today.`;
 
       liveSession = await ai.live.connect({
         model: 'gemini-3.8-live',
